@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meeting Analysis - Setup</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <div class="setup-container">
+        <div class="setup-header">
+            <h1>🎤 Welcome to Meeting Analysis</h1>
+            <p>Let's get everything set up for you!</p>
+        </div>
+
+        <div class="setup-content">
+            <div class="setup-step" id="whisperStep">
+                <div class="setup-step-title">Whisper Transcription Engine</div>
+                <div class="setup-step-status">
+                    <span class="status-icon pending" id="whisperIcon"></span>
+                    <span id="whisperStatus">Waiting...</span>
+                </div>
+                <div class="progress-bar-setup" style="display: none;" id="whisperProgress">
+                    <div class="progress-fill-setup" id="whisperProgressFill"></div>
+                </div>
+                <div class="setup-message" id="whisperMessage"></div>
+            </div>
+
+            <div class="setup-step" id="ffmpegStep">
+                <div class="setup-step-title">FFmpeg Audio Converter</div>
+                <div class="setup-step-status">
+                    <span class="status-icon pending" id="ffmpegIcon"></span>
+                    <span id="ffmpegStatus">Waiting...</span>
+                </div>
+                <div class="progress-bar-setup" style="display: none;" id="ffmpegProgress">
+                    <div class="progress-fill-setup" id="ffmpegProgressFill"></div>
+                </div>
+                <div class="setup-message" id="ffmpegMessage"></div>
+            </div>
+
+            <div class="setup-step" id="modelStep">
+                <div class="setup-step-title">Whisper AI Model</div>
+                <div class="setup-step-status">
+                    <span class="status-icon pending" id="modelIcon"></span>
+                    <span id="modelStatus">Waiting...</span>
+                </div>
+                <div class="progress-bar-setup" style="display: none;" id="modelProgress">
+                    <div class="progress-fill-setup" id="modelProgressFill"></div>
+                </div>
+                <div class="setup-message" id="modelMessage"></div>
+            </div>
+        </div>
+
+        <div id="errorContainer"></div>
+        <div id="successContainer" style="display: none;">
+            <div class="success-message">
+                ✅ Setup complete! You're all set to start analyzing meetings.
+            </div>
+        </div>
+
+        <div class="setup-actions">
+            <button class="btn-primary" id="startSetupBtn">Start Setup</button>
+            <button class="btn-primary" id="continueBtn" style="display: none;">Continue to App</button>
+        </div>
+    </div>
+
+    <script src="js/setup.js"></script>
+</body>
+</html>
+
+
+
+

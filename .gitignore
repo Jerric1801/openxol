@@ -1,0 +1,22 @@
+node_modules/
+build/
+dist/
+*.log
+.DS_Store
+*.swp
+*.swo
+*~
+.vscode/
+.idea/
+
+# Binaries (will be added separately)
+bin/**/*
+!bin/.gitkeep
+
+# Models (large files)
+resources/models/**/*
+!resources/models/.gitkeep
+
+
+
+
