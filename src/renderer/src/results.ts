@@ -106,7 +106,8 @@ export class ResultsManager {
 
     const resultsSection = document.getElementById('resultsSection')
     resultsSection?.querySelector('.workflow-status')?.remove()
-    resultsSection?.insertBefore(statusContainer, resultsSection.querySelector('h2')?.nextSibling || null)
+    const sectionHeader = resultsSection?.querySelector('.section-header')
+    resultsSection?.insertBefore(statusContainer, sectionHeader?.nextSibling || null)
   }
 
   private displayErrors(errors: PipelineError[]): void {

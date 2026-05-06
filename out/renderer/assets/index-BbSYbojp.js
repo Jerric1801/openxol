@@ -185,18 +185,18 @@ class ConfigManager {
   getConfigFromUI() {
     return {
       transcription: {
-        model: document.getElementById("transcriptionModel").value,
+        model: document.getElementById("transcriptionModel")?.value || "base.en",
         language: "",
         useGpu: true
       },
       diarization: {
-        enabled: document.getElementById("diarizationEnabled").checked,
-        method: document.getElementById("diarizationMethod").value
+        enabled: document.getElementById("diarizationEnabled")?.checked || false,
+        method: document.getElementById("diarizationMethod")?.value || "whisper-native"
       },
       analysis: {
-        enabled: document.getElementById("analysisEnabled").checked,
-        apiKey: document.getElementById("apiKey").value,
-        model: document.getElementById("analysisModel").value
+        enabled: document.getElementById("analysisEnabled")?.checked !== false,
+        apiKey: document.getElementById("apiKey")?.value || "",
+        model: document.getElementById("analysisModel")?.value || "gemini-2.5-flash-lite"
       },
       document: {
         enabled: true,
@@ -204,8 +204,8 @@ class ConfigManager {
         includeSpeakerAnalysis: true
       },
       output: {
-        directory: document.getElementById("outputDirectory").value,
-        useTimestampedDirs: document.getElementById("useTimestampedDirs").checked
+        directory: document.getElementById("outputDirectory")?.value || "",
+        useTimestampedDirs: document.getElementById("useTimestampedDirs")?.checked !== false
       }
     };
   }
@@ -215,8 +215,10 @@ class ConfigManager {
       document.getElementById("transcriptionModel").value = this.config.transcription.model || "base.en";
     }
     if (this.config.diarization) {
-      document.getElementById("diarizationEnabled").checked = this.config.diarization.enabled || false;
-      document.getElementById("diarizationMethod").value = this.config.diarization.method || "whisper-native";
+      const diarizationEnabled = document.getElementById("diarizationEnabled");
+      if (diarizationEnabled) diarizationEnabled.checked = this.config.diarization.enabled || false;
+      const diarizationMethod = document.getElementById("diarizationMethod");
+      if (diarizationMethod) diarizationMethod.value = this.config.diarization.method || "whisper-native";
     }
     if (this.config.analysis) {
       document.getElementById("analysisEnabled").checked = this.config.analysis.enabled !== false;
@@ -224,8 +226,10 @@ class ConfigManager {
       document.getElementById("analysisModel").value = this.config.analysis.model || "gemini-2.0-flash-exp";
     }
     if (this.config.output) {
-      document.getElementById("outputDirectory").value = this.config.output.directory || "";
-      document.getElementById("useTimestampedDirs").checked = this.config.output.useTimestampedDirs !== false;
+      const outputDirectory = document.getElementById("outputDirectory");
+      if (outputDirectory) outputDirectory.value = this.config.output.directory || "";
+      const useTimestampedDirs = document.getElementById("useTimestampedDirs");
+      if (useTimestampedDirs) useTimestampedDirs.checked = this.config.output.useTimestampedDirs !== false;
     }
   }
   getDefaultConfig() {
@@ -254,9 +258,7 @@ class ConfigManager {
 }
 const configManager = new ConfigManager();
 function initConfigUI() {
-  document.addEventListener("DOMContentLoaded", () => {
-    configManager.loadConfig();
-  });
+  configManager.loadConfig();
   document.getElementById("configToggle")?.addEventListener("click", () => {
     const panel = document.getElementById("configPanel");
     if (panel) {
@@ -269,7 +271,8 @@ function initConfigUI() {
   document.getElementById("selectOutputDir")?.addEventListener("click", async () => {
     const path = await window.electronAPI.selectOutputDirectory();
     if (path) {
-      document.getElementById("outputDirectory").value = path;
+      const outputDirectory = document.getElementById("outputDirectory");
+      if (outputDirectory) outputDirectory.value = path;
     }
   });
 }

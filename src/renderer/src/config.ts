@@ -28,18 +28,28 @@ export class ConfigManager {
   getConfigFromUI(): Config {
     return {
       transcription: {
-        model: (document.getElementById('transcriptionModel') as HTMLSelectElement).value,
+        model:
+          (document.getElementById('transcriptionModel') as HTMLSelectElement | null)?.value ||
+          'base.en',
         language: '',
         useGpu: true
       },
       diarization: {
-        enabled: (document.getElementById('diarizationEnabled') as HTMLInputElement).checked,
-        method: (document.getElementById('diarizationMethod') as HTMLSelectElement).value as any
+        enabled:
+          (document.getElementById('diarizationEnabled') as HTMLInputElement | null)?.checked ||
+          false,
+        method:
+          ((document.getElementById('diarizationMethod') as HTMLSelectElement | null)?.value ||
+            'whisper-native') as any
       },
       analysis: {
-        enabled: (document.getElementById('analysisEnabled') as HTMLInputElement).checked,
-        apiKey: (document.getElementById('apiKey') as HTMLInputElement).value,
-        model: (document.getElementById('analysisModel') as HTMLSelectElement).value
+        enabled:
+          (document.getElementById('analysisEnabled') as HTMLInputElement | null)?.checked !== false,
+        apiKey:
+          (document.getElementById('apiKey') as HTMLInputElement | null)?.value || '',
+        model:
+          (document.getElementById('analysisModel') as HTMLSelectElement | null)?.value ||
+          'gemini-2.5-flash-lite'
       },
       document: {
         enabled: true,
@@ -47,8 +57,11 @@ export class ConfigManager {
         includeSpeakerAnalysis: true
       },
       output: {
-        directory: (document.getElementById('outputDirectory') as HTMLInputElement).value,
-        useTimestampedDirs: (document.getElementById('useTimestampedDirs') as HTMLInputElement).checked
+        directory:
+          (document.getElementById('outputDirectory') as HTMLInputElement | null)?.value || '',
+        useTimestampedDirs:
+          (document.getElementById('useTimestampedDirs') as HTMLInputElement | null)?.checked !==
+          false
       }
     }
   }
@@ -62,10 +75,10 @@ export class ConfigManager {
     }
 
     if (this.config.diarization) {
-      ;(document.getElementById('diarizationEnabled') as HTMLInputElement).checked =
-        this.config.diarization.enabled || false
-      ;(document.getElementById('diarizationMethod') as HTMLSelectElement).value =
-        this.config.diarization.method || 'whisper-native'
+      const diarizationEnabled = document.getElementById('diarizationEnabled') as HTMLInputElement | null
+      if (diarizationEnabled) diarizationEnabled.checked = this.config.diarization.enabled || false
+      const diarizationMethod = document.getElementById('diarizationMethod') as HTMLSelectElement | null
+      if (diarizationMethod) diarizationMethod.value = this.config.diarization.method || 'whisper-native'
     }
 
     if (this.config.analysis) {
@@ -77,10 +90,10 @@ export class ConfigManager {
     }
 
     if (this.config.output) {
-      ;(document.getElementById('outputDirectory') as HTMLInputElement).value =
-        this.config.output.directory || ''
-      ;(document.getElementById('useTimestampedDirs') as HTMLInputElement).checked =
-        this.config.output.useTimestampedDirs !== false
+      const outputDirectory = document.getElementById('outputDirectory') as HTMLInputElement | null
+      if (outputDirectory) outputDirectory.value = this.config.output.directory || ''
+      const useTimestampedDirs = document.getElementById('useTimestampedDirs') as HTMLInputElement | null
+      if (useTimestampedDirs) useTimestampedDirs.checked = this.config.output.useTimestampedDirs !== false
     }
   }
 
@@ -115,9 +128,7 @@ export const configManager = new ConfigManager()
 
 // Initialize listeners
 export function initConfigUI(): void {
-  document.addEventListener('DOMContentLoaded', () => {
-    configManager.loadConfig()
-  })
+  configManager.loadConfig()
 
   document.getElementById('configToggle')?.addEventListener('click', () => {
     const panel = document.getElementById('configPanel')
@@ -133,7 +144,8 @@ export function initConfigUI(): void {
   document.getElementById('selectOutputDir')?.addEventListener('click', async () => {
     const path = await (window as any).electronAPI.selectOutputDirectory()
     if (path) {
-      ;(document.getElementById('outputDirectory') as HTMLInputElement).value = path
+      const outputDirectory = document.getElementById('outputDirectory') as HTMLInputElement | null
+      if (outputDirectory) outputDirectory.value = path
     }
   })
 }

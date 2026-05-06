@@ -14,9 +14,20 @@ const setupManager = new SetupManager()
 const recordingManager = new RecordingManager()
 
 
+const DEV_SERVER_URL = process.env['ELECTRON_RENDERER_URL']
+
 // out/main/ → ../renderer/ resolves to project root /out/renderer/ in both dev and packaged ASAR
 function rendererFile(html: string): string {
   return path.join(__dirname, '../renderer', html)
+}
+
+function loadPage(win: BrowserWindow, html: string): void {
+  if (DEV_SERVER_URL) {
+    const base = DEV_SERVER_URL.replace(/\/$/, '')
+    win.loadURL(html === 'index.html' ? base : `${base}/${html}`)
+  } else {
+    win.loadFile(rendererFile(html))
+  }
 }
 
 async function createWindow(): Promise<void> {
@@ -35,11 +46,11 @@ async function createWindow(): Promise<void> {
 
   if (isSetupComplete) {
     log.info('Setup complete. Launching Main App...')
-    mainWindow.loadFile(rendererFile('index.html'))
+    loadPage(mainWindow, 'index.html')
   } else {
     log.info('Setup incomplete. Launching Setup Wizard...')
     log.info(`Missing components: ${status.missing?.join(', ') ?? 'unknown'}`)
-    mainWindow.loadFile(rendererFile('setup.html'))
+    loadPage(mainWindow, 'setup.html')
   }
 
   if (!app.isPackaged) {
@@ -74,7 +85,7 @@ app.whenReady().then(async () => {
     if (win) {
       const status = await setupManager.checkSetupComplete()
       if (status.complete) {
-        win.loadFile(rendererFile('index.html'))
+        loadPage(win, 'index.html')
       } else {
         log.warn('setup-finished received but required files still missing')
       }
