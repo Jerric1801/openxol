@@ -2,7 +2,6 @@ import https from 'https'
 import fs from 'fs'
 import fsPromises from 'fs/promises'
 import path from 'path'
-import { app } from 'electron'
 import log from 'electron-log'
 import * as binaryPaths from './binary-paths'
 import type { SetupStatus, SetupProgress } from '../../types/setup'
@@ -20,8 +19,9 @@ export class SetupManager {
   private modelsPath: string
 
   constructor() {
-    this.setupDataPath = path.join(app.getPath('userData'), 'setup.json')
-    this.modelsPath = path.join(app.getPath('userData'), 'models', 'whisper')
+    const userData = process.env['APP_USER_DATA'] || ''
+    this.setupDataPath = path.join(userData, 'setup.json')
+    this.modelsPath = path.join(userData, 'models', 'whisper')
   }
 
   getBinaryPath(name: string): string {
@@ -193,7 +193,7 @@ export class SetupManager {
     const platform = process.platform
     const arch = process.arch
 
-    if (app.isPackaged) {
+    if (process.env['APP_IS_PACKAGED'] === '1') {
       return `Required binary '${name}' is missing from this installation. Please re-download OpenXol from the official website.`
     }
 

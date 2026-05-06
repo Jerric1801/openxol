@@ -25,7 +25,7 @@ const electron = require("electron");
 const path = require("path");
 const log = require("electron-log");
 const os = require("os");
-const setupManager$1 = require("./chunks/setup-manager-ps7usH7x.js");
+const setupManager$1 = require("./chunks/setup-manager-Qv2tAgHY.js");
 const fs = require("fs");
 const child_process = require("child_process");
 require("https");
@@ -188,8 +188,17 @@ let configManager;
 let activeWorker = null;
 const setupManager = new setupManager$1.SetupManager();
 const recordingManager = new RecordingManager();
+const DEV_SERVER_URL = process.env["ELECTRON_RENDERER_URL"];
 function rendererFile(html) {
   return path.join(__dirname, "../renderer", html);
+}
+function loadPage(win, html) {
+  if (DEV_SERVER_URL) {
+    const base = DEV_SERVER_URL.replace(/\/$/, "");
+    win.loadURL(html === "index.html" ? base : `${base}/${html}`);
+  } else {
+    win.loadFile(rendererFile(html));
+  }
 }
 async function createWindow() {
   const status = await setupManager.checkSetupComplete();
@@ -205,17 +214,20 @@ async function createWindow() {
   });
   if (isSetupComplete) {
     log.info("Setup complete. Launching Main App...");
-    mainWindow.loadFile(rendererFile("index.html"));
+    loadPage(mainWindow, "index.html");
   } else {
     log.info("Setup incomplete. Launching Setup Wizard...");
     log.info(`Missing components: ${status.missing?.join(", ") ?? "unknown"}`);
-    mainWindow.loadFile(rendererFile("setup.html"));
+    loadPage(mainWindow, "setup.html");
   }
   if (!electron.app.isPackaged) {
     mainWindow.webContents.openDevTools();
   }
 }
 electron.app.whenReady().then(async () => {
+  process.env["APP_USER_DATA"] = electron.app.getPath("userData");
+  process.env["APP_IS_PACKAGED"] = electron.app.isPackaged ? "1" : "0";
+  process.env["APP_PATH"] = electron.app.getAppPath();
   configManager = new ConfigManager();
   await configManager.init();
   electron.ipcMain.removeHandler("perform-setup");
@@ -237,7 +249,7 @@ electron.app.whenReady().then(async () => {
     if (win) {
       const status = await setupManager.checkSetupComplete();
       if (status.complete) {
-        win.loadFile(rendererFile("index.html"));
+        loadPage(win, "index.html");
       } else {
         log.warn("setup-finished received but required files still missing");
       }

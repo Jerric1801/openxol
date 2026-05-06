@@ -5,7 +5,7 @@ const log = require("electron-log");
 const child_process = require("child_process");
 const fs = require("fs");
 const fsPromises = require("fs/promises");
-const setupManager = require("./chunks/setup-manager-ps7usH7x.js");
+const setupManager = require("./chunks/setup-manager-Qv2tAgHY.js");
 const generativeAi = require("@google/generative-ai");
 const docx = require("docx");
 require("https");

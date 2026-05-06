@@ -1,17 +1,24 @@
 import path from 'path'
 import fs from 'fs'
-import { app } from 'electron'
 import log from 'electron-log'
 import { FileUtils } from './file-utils'
 
 export const PLATFORM_DIR =
   process.platform === 'win32' ? 'win32' : process.platform === 'linux' ? 'linux' : 'darwin'
 
+function isPackaged(): boolean {
+  return process.env['APP_IS_PACKAGED'] === '1'
+}
+
+function appPath(): string {
+  return process.env['APP_PATH'] || ''
+}
+
 function getBinaryDir(): string {
-  if (app.isPackaged) {
+  if (isPackaged()) {
     const candidates = [
       path.join(process.resourcesPath, 'bin', PLATFORM_DIR),
-      path.join(app.getAppPath(), '..', 'bin', PLATFORM_DIR),
+      path.join(appPath(), '..', 'bin', PLATFORM_DIR),
       path.join(process.resourcesPath, '..', 'bin', PLATFORM_DIR)
     ]
     for (const dir of candidates) {
@@ -23,8 +30,7 @@ function getBinaryDir(): string {
     log.warn(`No binary dir found. Tried: ${candidates.join(', ')}`)
     return candidates[0] || ''
   }
-  // Dev: app.getAppPath() points to project root
-  return path.join(app.getAppPath(), 'bin', PLATFORM_DIR)
+  return path.join(appPath(), 'bin', PLATFORM_DIR)
 }
 
 export function getBinaryPath(name: string): string {
@@ -33,19 +39,15 @@ export function getBinaryPath(name: string): string {
 }
 
 export async function getModelPath(modelName = 'base.en'): Promise<string> {
-  const userDataPath = path.join(
-    app.getPath('userData'),
-    'models',
-    'whisper',
-    `ggml-${modelName}.bin`
-  )
+  const userData = process.env['APP_USER_DATA'] || ''
+  const userDataPath = path.join(userData, 'models', 'whisper', `ggml-${modelName}.bin`)
 
   if (await FileUtils.fileExists(userDataPath)) {
     log.info(`Model resolved from userData: ${userDataPath}`)
     return userDataPath
   }
 
-  const bundledPath = app.isPackaged
+  const bundledPath = isPackaged()
     ? path.join(process.resourcesPath, 'resources', 'models', 'whisper', `ggml-${modelName}.bin`)
     : path.join(__dirname, '../../resources/models/whisper', `ggml-${modelName}.bin`)
 

@@ -3,9 +3,9 @@ const https = require("https");
 const fs = require("fs");
 const fsPromises = require("fs/promises");
 const path = require("path");
-const electron = require("electron");
 const log = require("electron-log");
 const os = require("os");
+const electron = require("electron");
 class FileUtils {
   static async getWorkingDirectory() {
     let baseTempDir;
@@ -65,11 +65,17 @@ class FileUtils {
   }
 }
 const PLATFORM_DIR = process.platform === "win32" ? "win32" : process.platform === "linux" ? "linux" : "darwin";
+function isPackaged() {
+  return process.env["APP_IS_PACKAGED"] === "1";
+}
+function appPath() {
+  return process.env["APP_PATH"] || "";
+}
 function getBinaryDir() {
-  if (electron.app.isPackaged) {
+  if (isPackaged()) {
     const candidates = [
       path.join(process.resourcesPath, "bin", PLATFORM_DIR),
-      path.join(electron.app.getAppPath(), "..", "bin", PLATFORM_DIR),
+      path.join(appPath(), "..", "bin", PLATFORM_DIR),
       path.join(process.resourcesPath, "..", "bin", PLATFORM_DIR)
     ];
     for (const dir of candidates) {
@@ -81,24 +87,20 @@ function getBinaryDir() {
     log.warn(`No binary dir found. Tried: ${candidates.join(", ")}`);
     return candidates[0] || "";
   }
-  return path.join(electron.app.getAppPath(), "bin", PLATFORM_DIR);
+  return path.join(appPath(), "bin", PLATFORM_DIR);
 }
 function getBinaryPath(name) {
   const filename = process.platform === "win32" ? `${name}.exe` : name;
   return path.join(getBinaryDir(), filename);
 }
 async function getModelPath(modelName = "base.en") {
-  const userDataPath = path.join(
-    electron.app.getPath("userData"),
-    "models",
-    "whisper",
-    `ggml-${modelName}.bin`
-  );
+  const userData = process.env["APP_USER_DATA"] || "";
+  const userDataPath = path.join(userData, "models", "whisper", `ggml-${modelName}.bin`);
   if (await FileUtils.fileExists(userDataPath)) {
     log.info(`Model resolved from userData: ${userDataPath}`);
     return userDataPath;
   }
-  const bundledPath = electron.app.isPackaged ? path.join(process.resourcesPath, "resources", "models", "whisper", `ggml-${modelName}.bin`) : path.join(__dirname, "../../resources/models/whisper", `ggml-${modelName}.bin`);
+  const bundledPath = isPackaged() ? path.join(process.resourcesPath, "resources", "models", "whisper", `ggml-${modelName}.bin`) : path.join(__dirname, "../../resources/models/whisper", `ggml-${modelName}.bin`);
   if (await FileUtils.fileExists(bundledPath)) {
     log.info(`Model resolved from bundle: ${bundledPath}`);
     return bundledPath;
@@ -117,8 +119,9 @@ class SetupManager {
   setupDataPath;
   modelsPath;
   constructor() {
-    this.setupDataPath = path.join(electron.app.getPath("userData"), "setup.json");
-    this.modelsPath = path.join(electron.app.getPath("userData"), "models", "whisper");
+    const userData = process.env["APP_USER_DATA"] || "";
+    this.setupDataPath = path.join(userData, "setup.json");
+    this.modelsPath = path.join(userData, "models", "whisper");
   }
   getBinaryPath(name) {
     return getBinaryPath(name);
@@ -261,7 +264,7 @@ class SetupManager {
   getInstallationInstructions(name) {
     const platform = process.platform;
     const arch = process.arch;
-    if (electron.app.isPackaged) {
+    if (process.env["APP_IS_PACKAGED"] === "1") {
       return `Required binary '${name}' is missing from this installation. Please re-download OpenXol from the official website.`;
     }
     if (name === "whisper") {

@@ -59,6 +59,11 @@ async function createWindow(): Promise<void> {
 }
 
 app.whenReady().then(async () => {
+  // Expose app paths as env vars so utilityProcess workers can read them without app API
+  process.env['APP_USER_DATA'] = app.getPath('userData')
+  process.env['APP_IS_PACKAGED'] = app.isPackaged ? '1' : '0'
+  process.env['APP_PATH'] = app.getAppPath()
+
   configManager = new ConfigManager()
   await configManager.init()
 
