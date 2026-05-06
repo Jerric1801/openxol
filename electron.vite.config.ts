@@ -19,6 +19,16 @@ export default defineConfig({
       }
     },
     plugins: [externalizeDepsPlugin()]
+  },
+  renderer: {
+    root: 'src/renderer',
+    build: {
+      rollupOptions: {
+        input: {
+          index: 'src/renderer/index.html',
+          setup: 'src/renderer/setup.html'
+        }
+      }
+    }
   }
-  // renderer: migrated to Vite in Phase 2 — served as static files via loadFile() for now
 })

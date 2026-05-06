@@ -14,9 +14,9 @@ const setupManager = new SetupManager()
 const recordingManager = new RecordingManager()
 
 
-// out/main/ → ../../src/renderer/ resolves to project root /src/renderer/ in both dev and packaged ASAR
+// out/main/ → ../renderer/ resolves to project root /out/renderer/ in both dev and packaged ASAR
 function rendererFile(html: string): string {
-  return path.join(__dirname, '../../src/renderer', html)
+  return path.join(__dirname, '../renderer', html)
 }
 
 async function createWindow(): Promise<void> {

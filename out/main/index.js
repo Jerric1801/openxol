@@ -189,7 +189,7 @@ let activeWorker = null;
 const setupManager = new setupManager$1.SetupManager();
 const recordingManager = new RecordingManager();
 function rendererFile(html) {
-  return path.join(__dirname, "../../src/renderer", html);
+  return path.join(__dirname, "../renderer", html);
 }
 async function createWindow() {
   const status = await setupManager.checkSetupComplete();
