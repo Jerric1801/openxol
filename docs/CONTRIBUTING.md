@@ -5,21 +5,48 @@
 ### Prerequisites
 
 - Node.js ≥ 18
-- macOS: place `bin/darwin/whisper` and `bin/darwin/ffmpeg` (see below)
-- Windows: place `bin/win32/whisper.exe`, `bin/win32/ffmpeg.exe`, `bin/win32/whisper.dll`, `bin/win32/SDL2.dll`
-- Linux: place `bin/linux/whisper` and `bin/linux/ffmpeg`
+- Platform binaries placed in `bin/` (see below)
 
-### Getting Binaries
+### Getting Binaries for Development
 
-whisper.cpp binary — build from source or download a release:
-- Build: `cmake -B build && cmake --build build --config Release` in a whisper.cpp checkout, then copy `build/bin/whisper-cli` to `bin/<platform>/whisper`
-- macOS: ensure binary is executable — `chmod +x bin/darwin/whisper`
+In dev mode, place any arch-compatible binary for your machine. Distribution builds have stricter requirements (see Build Matrix below).
 
-ffmpeg — use the system binary or a static build:
-- macOS: `brew install ffmpeg`, then `cp $(which ffmpeg) bin/darwin/ffmpeg`
-- Windows: download from gyan.dev/ffmpeg/builds, copy `ffmpeg.exe`
+**macOS (Apple Silicon or Intel):**
+```bash
+# whisper.cpp — build from source
+git clone https://github.com/ggerganov/whisper.cpp
+cd whisper.cpp && mkdir build && cd build
+cmake -DGGML_METAL=ON .. && make -j   # Apple Silicon
+# cmake .. && make -j                  # Intel
+cp build/bin/whisper-cli <project>/bin/darwin/whisper
+chmod +x <project>/bin/darwin/whisper
 
-The whisper model (`ggml-base.en.bin`) downloads automatically on first run via the setup wizard. Alternatively place it manually at `userData/models/whisper/ggml-base.en.bin` or `resources/models/whisper/ggml-base.en.bin`.
+# ffmpeg — use Homebrew
+brew install ffmpeg
+cp $(which ffmpeg) bin/darwin/ffmpeg
+chmod +x bin/darwin/ffmpeg
+```
+
+**Windows (x64):**
+- whisper.exe: download from https://github.com/ggerganov/whisper.cpp/releases → place in `bin/win32/whisper.exe`
+- Also required alongside it: `whisper.dll`, `SDL2.dll`
+- ffmpeg.exe: download from https://www.gyan.dev/ffmpeg/builds/ → place in `bin/win32/ffmpeg.exe`
+
+**Linux (x64):**
+```bash
+# whisper.cpp
+git clone https://github.com/ggerganov/whisper.cpp
+cd whisper.cpp && mkdir build && cd build && cmake .. && make -j
+cp build/bin/whisper-cli <project>/bin/linux/whisper
+chmod +x <project>/bin/linux/whisper
+
+# ffmpeg
+sudo apt install ffmpeg   # or equivalent
+cp $(which ffmpeg) bin/linux/ffmpeg
+chmod +x bin/linux/ffmpeg
+```
+
+**Whisper model** downloads automatically on first run. Or place manually at `userData/models/whisper/ggml-base.en.bin`.
 
 ### Install and Run
 
@@ -28,12 +55,74 @@ npm install
 npm run dev        # TypeScript watch + Electron (DevTools open automatically)
 ```
 
-### Other Commands
+### Commands
 
 ```bash
-npm run typecheck  # TypeScript type-check without building
-npm run build      # Compile + package for current platform
+npm run typecheck      # TypeScript type-check without building
+npm run build:mac:dev  # Package for current host arch (no universal binary needed)
+npm run build:mac      # Package universal macOS DMG (requires universal binaries — see below)
+npm run build:win      # Package Windows NSIS installer
+npm run build:linux    # Package Linux AppImage
 ```
+
+---
+
+## Build Matrix
+
+| Platform | Arch | Binary requirement | Output |
+|---------|------|------------------|--------|
+| macOS (release) | universal | Universal binary — arm64 + x64 slices via `lipo` | Single DMG, runs on all Macs |
+| macOS (dev/test) | host arch | Any compatible binary | DMG for current machine only |
+| Windows | x64 | x64 exe | NSIS installer |
+| Linux | x64 | x64 binary | AppImage |
+
+### Building Universal macOS Binaries
+
+`build:mac` requires `bin/darwin/whisper` and `bin/darwin/ffmpeg` to be **universal binaries**. Build both arch slices then combine:
+
+```bash
+# whisper.cpp — build both slices
+cd whisper.cpp
+mkdir build-arm64 && cd build-arm64
+cmake -DGGML_METAL=ON -DCMAKE_OSX_ARCHITECTURES=arm64 .. && make -j && cd ..
+mkdir build-x64 && cd build-x64
+cmake -DCMAKE_OSX_ARCHITECTURES=x86_64 .. && make -j && cd ..
+
+# Combine into universal binary
+lipo -create -output <project>/bin/darwin/whisper \
+  build-arm64/bin/whisper-cli \
+  build-x64/bin/whisper-cli
+chmod +x <project>/bin/darwin/whisper
+
+# Verify
+lipo -info <project>/bin/darwin/whisper
+# → Architectures in the fat file: arm64 x86_64
+```
+
+For ffmpeg, download universal static builds from https://evermeet.cx/ffmpeg/ (select "Universal").
+
+### macOS Code Signing & Notarization
+
+Required to pass Gatekeeper on other machines. Without signing, users see "app is damaged" warning.
+
+Set these environment variables before `build:mac`:
+```
+APPLE_ID=your@apple.id
+APPLE_APP_SPECIFIC_PASSWORD=xxxx-xxxx-xxxx-xxxx
+APPLE_TEAM_ID=XXXXXXXXXX
+```
+
+electron-builder handles signing and notarization automatically when these are set.
+
+### Windows GPU Acceleration (Optional)
+
+whisper.cpp supports CUDA on Windows. To enable:
+1. Build whisper.cpp with CUDA: `cmake -DGGML_CUDA=ON ..`
+2. Include CUDA runtime DLLs alongside `whisper.dll`
+
+Not required for basic functionality.
+
+---
 
 ## Making Changes
 
@@ -51,8 +140,6 @@ refactor/<short-description>
 
 [Conventional Commits](https://www.conventionalcommits.org/):
 ```
-<type>(<scope>): <description>
-
 feat(pipeline): add configurable diarization timeout
 fix(setup): resolve Linux binary path mapping
 docs(architecture): update IPC channel registry
@@ -68,7 +155,7 @@ docs(architecture): update IPC channel registry
 ## Reporting Issues
 
 File issues on GitHub with:
-- OS and version
-- App version (`Help → About` or `npm run build` output)
+- OS, version, and CPU architecture (Apple Silicon / Intel / x64)
+- App version (`Help → About`)
 - Steps to reproduce
-- Relevant logs from `~/Library/Logs/OpenXol/` (macOS) or `%APPDATA%\OpenXol\logs\` (Windows)
+- Logs: `~/Library/Logs/OpenXol/` (macOS) · `%APPDATA%\OpenXol\logs\` (Windows) · `~/.config/OpenXol/logs/` (Linux)

@@ -4,6 +4,7 @@ const fsPromises = require('fs').promises;
 const path = require('path');
 const { app } = require('electron');
 const log = require('electron-log');
+const binaryPaths = require('./binary-paths');
 
 // Helper to ensure directory exists
 const ensureDir = async (dir) => {
@@ -17,40 +18,11 @@ const ensureDir = async (dir) => {
 class SetupManager {
   constructor() {
     this.setupDataPath = path.join(app.getPath('userData'), 'setup.json');
-    // In production, binaries are inside the app bundle
-    this.binariesPath = this.getBinariesPath();
-    // Models go in user data so they persist across updates
     this.modelsPath = path.join(app.getPath('userData'), 'models', 'whisper');
   }
 
-  getBinariesPath() {
-    const platform = process.platform === 'win32' ? 'win32' : 'darwin'; // Simplified for Mac/Win
-    
-    if (app.isPackaged) {
-      // In packaged app, binaries should be in resources folder (outside asar)
-      // Try multiple possible locations
-      const possiblePaths = [
-        path.join(process.resourcesPath, 'bin', platform), // Standard location
-        path.join(app.getAppPath(), '..', 'bin', platform), // Alternative location
-        path.join(process.resourcesPath, '..', 'bin', platform) // Fallback
-      ];
-      
-      // Return the first path (standard location)
-      // The checkBinary method will verify if it exists
-      const primaryPath = possiblePaths[0];
-      log.info(`Packaged app - looking for binaries at: ${primaryPath}`);
-      log.info(`process.resourcesPath: ${process.resourcesPath}`);
-      log.info(`app.getAppPath(): ${app.getAppPath()}`);
-      return primaryPath;
-    } else {
-      // Development mode
-      return path.join(__dirname, '../../bin', platform);
-    }
-  }
-
   getBinaryPath(name) {
-    const filename = process.platform === 'win32' ? `${name}.exe` : name;
-    return path.join(this.binariesPath, filename);
+    return binaryPaths.getBinaryPath(name);
   }
 
   async checkFileExists(filePath) {
@@ -241,7 +213,7 @@ class SetupManager {
 
   async getSetupStatus() {
     try {
-      const data = await fs.readFile(this.setupDataPath, 'utf-8');
+      const data = await fsPromises.readFile(this.setupDataPath, 'utf-8');
       return JSON.parse(data);
     } catch {
       return { completed: false };
@@ -250,58 +222,47 @@ class SetupManager {
 
   getInstallationInstructions(name) {
     const platform = process.platform;
-    
+    const arch = process.arch; // 'arm64' | 'x64' etc.
+
+    if (app.isPackaged) {
+      return `Required binary '${name}' is missing from this installation. Please re-download OpenXol from the official website.`;
+    }
+
     if (name === 'whisper') {
       if (platform === 'darwin') {
-        return `To install Whisper on macOS:
-
-Option 1 - Build from source (recommended):
-1. Open Terminal
-2. Navigate to the whisper.cpp directory in this project
-3. Run: mkdir -p build && cd build && cmake .. && make
-4. Copy the binary: cp build/bin/whisper-cli ../../meeting-analysis-app/bin/darwin/whisper
-5. Make it executable: chmod +x ../../meeting-analysis-app/bin/darwin/whisper
-
-Option 2 - Download pre-built binary:
-Visit https://github.com/ggerganov/whisper.cpp/releases
-Download the macOS binary and extract it to: bin/darwin/whisper`;
+        const archFlag = arch === 'arm64' ? '-DGGML_METAL=ON' : '';
+        return `whisper.cpp binary missing (macOS ${arch}). Build from source:
+1. git clone https://github.com/ggerganov/whisper.cpp
+2. cd whisper.cpp && mkdir build && cd build
+3. cmake ${archFlag} .. && make -j
+4. cp build/bin/whisper-cli <project>/bin/darwin/whisper
+5. chmod +x <project>/bin/darwin/whisper`;
       } else if (platform === 'win32') {
-        return `To install Whisper on Windows:
-1. Visit https://github.com/ggerganov/whisper.cpp/releases
-2. Download the Windows binary (whisper.exe)
-3. Place it in: bin/win32/whisper.exe`;
+        return `whisper.cpp binary missing (Windows). Download from:
+https://github.com/ggerganov/whisper.cpp/releases
+Place whisper.exe in: bin/win32/whisper.exe`;
+      } else {
+        return `whisper.cpp binary missing (Linux ${arch}). Build from source:
+1. git clone https://github.com/ggerganov/whisper.cpp
+2. cd whisper.cpp && mkdir build && cd build && cmake .. && make -j
+3. cp build/bin/whisper-cli <project>/bin/linux/whisper
+4. chmod +x <project>/bin/linux/whisper`;
       }
     } else if (name === 'ffmpeg') {
       if (platform === 'darwin') {
-        return `To install FFmpeg on macOS:
-
-Option 1 - Using Homebrew (recommended):
-1. Open Terminal
-2. Run: brew install ffmpeg
-3. Find the binary: which ffmpeg
-4. Copy it to: bin/darwin/ffmpeg
-5. Make it executable: chmod +x bin/darwin/ffmpeg
-
-Option 2 - Download manually:
-1. Visit https://evermeet.cx/ffmpeg/
-2. Download ffmpeg for macOS
-3. Extract and place in: bin/darwin/ffmpeg
-4. Make it executable: chmod +x bin/darwin/ffmpeg`;
+        return `ffmpeg binary missing (macOS ${arch}):
+brew install ffmpeg && cp $(which ffmpeg) bin/darwin/ffmpeg && chmod +x bin/darwin/ffmpeg`;
       } else if (platform === 'win32') {
-        return `To install FFmpeg on Windows:
-1. Visit https://www.gyan.dev/ffmpeg/builds/
-2. Download "ffmpeg-release-essentials.zip"
-3. Extract and place ffmpeg.exe in: bin/win32/ffmpeg.exe`;
+        return `ffmpeg binary missing (Windows). Download from https://www.gyan.dev/ffmpeg/builds/
+Place ffmpeg.exe in: bin/win32/ffmpeg.exe`;
+      } else {
+        return `ffmpeg binary missing (Linux ${arch}):
+sudo apt install ffmpeg   # or equivalent for your distro
+cp $(which ffmpeg) bin/linux/ffmpeg && chmod +x bin/linux/ffmpeg`;
       }
     }
-    
-    return 'Please ensure the binary is included in the app bundle.';
-  }
 
-  getMissingComponentsSummary() {
-    const missing = [];
-    // This will be populated by checkSetupComplete
-    return missing;
+    return `Binary '${name}' not found for ${platform}/${arch}. Place it in bin/${binaryPaths.PLATFORM_DIR}/.`;
   }
 }
 

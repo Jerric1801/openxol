@@ -15,13 +15,29 @@ extraFiles:
       - '**/*'
 asarUnpack:
   - 'bin/**/*'
+
+# macOS — universal binary (arm64 + x64 in one DMG)
+# bin/darwin/whisper and bin/darwin/ffmpeg MUST be universal binaries (built with lipo).
+# Dev shortcut: build:mac:dev uses host arch only (no lipo required).
 mac:
   category: public.app-category.productivity
-  target: dmg
+  target:
+    - target: dmg
+      arch: universal
   icon: assets/icon.icns
+  # Required entitlements for microphone and system audio capture (recording feature)
+  entitlementsInherit: build/entitlements.mac.plist
+
+# Windows — x64 only
 win:
-  target: nsis
+  target:
+    - target: nsis
+      arch: x64
   icon: assets/icon.ico
+
+# Linux — x64 only
 linux:
-  target: AppImage
+  target:
+    - target: AppImage
+      arch: x64
   icon: assets/icon.png

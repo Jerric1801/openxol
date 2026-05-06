@@ -365,8 +365,9 @@ ${analysis.insights || ''}
   }
 
   downloadDocx() {
-    // DOCX file should already be saved, just notify user
-    alert(`DOCX report saved to: ${this.currentResult.docxPath}`);
+    if (window.app) {
+      window.app.updateStatus(`Report saved to: ${this.currentResult.docxPath}`, 'success');
+    }
   }
 
   downloadText(text, filename) {

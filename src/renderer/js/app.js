@@ -7,18 +7,6 @@ class App {
     this.setupProgressListener();
   }
   
-  async cancelProcessing() {
-    if (this.isProcessing) {
-      try {
-        await window.electronAPI.cancelProcessing();
-        this.updateStatus('Cancelling...', 'warning');
-        // Don't set isProcessing to false yet - wait for final result
-      } catch (error) {
-        log.error('Failed to cancel processing:', error);
-      }
-    }
-  }
-
   setupEventListeners() {
     // Process files when added to queue
     // Listen for file additions

@@ -2,55 +2,13 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs').promises;
 const FileUtils = require('../utils/file-utils');
+const binaryPaths = require('../utils/binary-paths');
 const log = require('electron-log');
 
 class DiarizationModule {
   constructor(config) {
     this.config = config;
-    this.currentProcess = null; // Store process reference for cancellation
-  }
-
-  getBinaryPath() {
-    const { app } = require('electron');
-    const platform = process.platform;
-    
-    let platformDir;
-    if (platform === 'darwin') {
-      platformDir = 'darwin';
-    } else if (platform === 'win32') {
-      platformDir = 'win32';
-    } else {
-      platformDir = 'linux';
-    }
-
-    const binaryName = platform === 'win32' ? 'whisper.exe' : 'whisper';
-    
-    // In production, use app.getAppPath(), in development use __dirname
-    const appPath = app.isPackaged 
-      ? process.resourcesPath || app.getAppPath()
-      : path.join(__dirname, '../..');
-    
-    return path.join(appPath, 'bin', platformDir, binaryName);
-  }
-
-  async getModelPath(modelName = 'base.en') {
-    const { app } = require('electron');
-    
-    // Models are stored in userData so they persist across updates
-    // Check userData first (downloaded models), then fallback to bundled
-    const userDataPath = path.join(app.getPath('userData'), 'models', 'whisper', `ggml-${modelName}.bin`);
-    
-    // Check if model exists in userData
-    if (await FileUtils.fileExists(userDataPath)) {
-      return userDataPath;
-    }
-    
-    // Fallback to bundled resources (if bundled with app)
-    const appPath = app.isPackaged 
-      ? process.resourcesPath || app.getAppPath()
-      : path.join(__dirname, '../..');
-    
-    return path.join(appPath, 'resources', 'models', 'whisper', `ggml-${modelName}.bin`);
+    this.currentProcess = null;
   }
 
   async diarize(audioPath, transcript) {
@@ -66,8 +24,8 @@ class DiarizationModule {
   }
 
   async diarizeWithWhisper(audioPath) {
-    const whisperBin = this.getBinaryPath();
-    const modelPath = await this.getModelPath(this.config.transcription?.model || 'base.en');
+    const whisperBin = binaryPaths.getBinaryPath('whisper');
+    const modelPath = await binaryPaths.getModelPath(this.config.transcription?.model || 'base.en');
 
     if (!(await FileUtils.fileExists(whisperBin))) {
       const SetupManager = require('../utils/setup-manager');

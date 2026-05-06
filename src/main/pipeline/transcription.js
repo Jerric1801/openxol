@@ -2,70 +2,12 @@ const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs').promises;
 const FileUtils = require('../utils/file-utils');
+const binaryPaths = require('../utils/binary-paths');
 const log = require('electron-log');
 
 class TranscriptionModule {
   constructor(config) {
     this.config = config;
-  }
-
-  getBinaryPath() {
-    const { app } = require('electron');
-    const platform = process.platform;
-    
-    // Map platform names
-    let platformDir;
-    if (platform === 'darwin') {
-      platformDir = 'darwin';
-    } else if (platform === 'win32') {
-      platformDir = 'win32';
-    } else {
-      platformDir = 'linux';
-    }
-
-    const binaryName = platform === 'win32' ? 'whisper.exe' : 'whisper';
-    
-    // In production, use app.getAppPath(), in development use __dirname
-    const appPath = app.isPackaged 
-      ? process.resourcesPath || app.getAppPath()
-      : path.join(__dirname, '../..');
-    
-    return path.join(appPath, 'bin', platformDir, binaryName);
-  }
-
-  async getModelPath(modelName = 'base.en') {
-    const { app } = require('electron');
-    
-    // Models are stored in userData so they persist across updates
-    // Check userData first (downloaded models), then fallback to bundled
-    const userDataPath = path.join(app.getPath('userData'), 'models', 'whisper', `ggml-${modelName}.bin`);
-    
-    // Check if model exists in userData
-    if (await FileUtils.fileExists(userDataPath)) {
-      log.info(`Using model from userData: ${userDataPath}`);
-      return userDataPath;
-    }
-    
-    // Fallback to bundled resources (if bundled with app)
-    let bundledPath;
-    if (app.isPackaged) {
-      // process.resourcesPath points to Contents/Resources/ in packaged app
-      // So we should check Contents/Resources/resources/models/whisper/
-      bundledPath = path.join(process.resourcesPath, 'resources', 'models', 'whisper', `ggml-${modelName}.bin`);
-    } else {
-      // Development mode - check project root
-      bundledPath = path.join(__dirname, '../../resources/models/whisper', `ggml-${modelName}.bin`);
-    }
-    
-    log.info(`Checking bundled model at: ${bundledPath}`);
-    if (await FileUtils.fileExists(bundledPath)) {
-      log.info(`Using bundled model: ${bundledPath}`);
-      return bundledPath;
-    }
-    
-    // If neither exists, return userData path (setup will download there)
-    log.warn(`Model not found in userData or bundle, will need to download to: ${userDataPath}`);
-    return userDataPath;
   }
 
   async convertAudio(audioPath) {
@@ -85,7 +27,7 @@ class TranscriptionModule {
     const workingDir = await FileUtils.getWorkingDirectory();
     const fileName = FileUtils.getFileNameWithoutExtension(path.basename(audioPath));
     const outputPath = path.join(workingDir, `${fileName}.wav`);
-    const ffmpegPath = this.getFfmpegPath();
+    const ffmpegPath = binaryPaths.getBinaryPath('ffmpeg');
 
     // Check if ffmpeg exists before trying to use it
     if (!(await FileUtils.fileExists(ffmpegPath))) {
@@ -131,32 +73,9 @@ class TranscriptionModule {
     });
   }
 
-  getFfmpegPath() {
-    const { app } = require('electron');
-    const platform = process.platform;
-    
-    let platformDir;
-    if (platform === 'darwin') {
-      platformDir = 'darwin';
-    } else if (platform === 'win32') {
-      platformDir = 'win32';
-    } else {
-      platformDir = 'linux';
-    }
-
-    const binaryName = platform === 'win32' ? 'ffmpeg.exe' : 'ffmpeg';
-    
-    // In production, use app.getAppPath(), in development use __dirname
-    const appPath = app.isPackaged 
-      ? process.resourcesPath || app.getAppPath()
-      : path.join(__dirname, '../..');
-    
-    return path.join(appPath, 'bin', platformDir, binaryName);
-  }
-
   async transcribe(audioPath) {
-    const whisperBin = this.getBinaryPath();
-    const modelPath = await this.getModelPath(this.config.transcription.model || 'base.en');
+    const whisperBin = binaryPaths.getBinaryPath('whisper');
+    const modelPath = await binaryPaths.getModelPath(this.config.transcription.model || 'base.en');
 
     // Check if binaries exist
     if (!(await FileUtils.fileExists(whisperBin))) {
