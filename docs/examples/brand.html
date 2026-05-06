@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenXol Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <!-- Using Feather Icons for thin-stroke 1.5px icons -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <style>
+        /* --- CSS Variables based on OpenXol Brand Guide --- */
+        :root {
+            --bg-main: #F8F9FD;
+            --card-white: #FFFFFF;
+            --text-primary: #1E293B;
+            --text-secondary: #64748B;
+            
+            --accent-red: #FF4B4B;
+            --accent-cyan: #48D1E2;
+            --accent-violet: #8B5CF6;
+            
+            --border-light: #E2E8F0;
+            --glass-border: rgba(255, 255, 255, 0.4);
+            
+            --shadow-standard: 0 4px 20px rgba(0, 0, 0, 0.03);
+            --shadow-hover: 0 8px 30px rgba(72, 209, 226, 0.15); /* Cyan glow */
+            --radius-main: 24px;
+            --font-main: 'Inter', sans-serif;
+        }
+
+        /* --- Base Reset & Typography --- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-main);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1200px;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* --- Header & Logo --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: var(--text-primary);
+        }
+
+        /* Stylized "OX" Monogram implementation */
+        .logo-glyph {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%; /* The 'O' */
+            border: 2px solid var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .logo-glyph::before,
+        .logo-glyph::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 2px;
+            background-color: var(--text-primary);
+        }
+        
+        .logo-glyph::before { transform: rotate(45deg); }
+        .logo-glyph::after { transform: rotate(-45deg); }
+
+        /* --- Card Architecture --- */
+        
+        /* 1. Standard Cards */
+        .card-standard {
+            background: var(--card-white);
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-standard);
+            border-radius: var(--radius-main);
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .card-standard:hover {
+            transform: scale(1.01);
+            box-shadow: var(--shadow-hover);
+        }
+
+        /* 2. Special Glass Panels */
+        .card-glass {
+            background: linear-gradient(135deg, rgba(255,255,255,0.8) 0%, rgba(248,249,253,0.6) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-main);
+            padding: 2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(30, 41, 59, 0.05), inset 0 0 0 1px var(--glass-border);
+        }
+
+        /* Active Recording Hero State */
+        .card-glass.active-recording {
+            box-shadow: 0 0 0 1px var(--accent-red), 0 8px 32px rgba(255, 75, 75, 0.1);
+        }
+
+        /* --- Specific UI Components --- */
+        
+        /* Recording Header */
+        .recording-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .recording-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent-red);
+            font-weight: 500;
+        }
+
+        /* Pulsing Red Dot */
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--accent-red);
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 75, 75, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 75, 75, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 75, 75, 0); }
+        }
+
+        /* Mock Waveform */
+        .waveform-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            height: 60px;
+            margin: 2rem 0;
+        }
+
+        .bar {
+            width: 4px;
+            background-color: var(--accent-cyan);
+            border-radius: 2px;
+            animation: sound 0ms -800ms linear infinite alternate;
+        }
+
+        @keyframes sound {
+            0% { height: 10%; opacity: 0.5; }
+            100% { height: 100%; opacity: 1; }
+        }
+
+        /* Apply random heights/durations to waveform bars */
+        .bar:nth-child(1)  { height: 20%; animation-duration: 474ms; }
+        .bar:nth-child(2)  { height: 50%; animation-duration: 433ms; }
+        .bar:nth-child(3)  { height: 80%; animation-duration: 407ms; }
+        .bar:nth-child(4)  { height: 40%; animation-duration: 458ms; }
+        .bar:nth-child(5)  { height: 90%; animation-duration: 400ms; }
+        .bar:nth-child(6)  { height: 60%; animation-duration: 427ms; }
+        .bar:nth-child(7)  { height: 30%; animation-duration: 441ms; }
+        .bar:nth-child(8)  { height: 70%; animation-duration: 419ms; }
+
+        /* Typography Utilities */
+        h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 0.5rem; }
+        h3 { font-size: 1.1rem; font-weight: 500; margin-bottom: 0.25rem; }
+        p { color: var(--text-secondary); line-height: 1.5; font-size: 0.95rem; }
+        
+        .insight-text { color: var(--accent-violet); font-weight: 500; margin-top: 1rem; }
+
+        /* Grid Layouts */
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: opacity 0.2s;
+        }
+
+        .btn-primary:hover { opacity: 0.9; }
+
+        .btn-icon {
+            background: white;
+            border: 1px solid var(--border-light);
+            color: var(--text-primary);
+            padding: 0.5rem;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .tag {
+            background: #F1F5F9;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 100px;
+            font-weight: 500;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        
+        <!-- Header -->
+        <header>
+            <div class="logo">
+                <div class="logo-glyph"></div>
+                OpenXol
+            </div>
+            <button class="btn-primary">
+                <i data-feather="plus" stroke-width="1.5"></i> New Meeting
+            </button>
+        </header>
+
+        <!-- Active Recording State (The Hero Glass Panel) -->
+        <section class="card-glass active-recording">
+            <div class="recording-header">
+                <div class="recording-status">
+                    <div class="pulse-dot"></div>
+                    Recording in progress...
+                </div>
+                <div style="color: var(--text-secondary); font-variant-numeric: tabular-nums;">
+                    00:14:32
+                </div>
+            </div>
+            
+            <h2>Product Sync: Q3 Roadmap</h2>
+            <p>Transcribing via local Whisper node. Data remains entirely on-device.</p>
+
+            <div class="waveform-container">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+            </div>
+
+            <div style="display: flex; gap: 1rem; margin-top: 1.5rem;">
+                <button class="btn-icon" style="color: var(--accent-red); border-color: rgba(255,75,75,0.2);">
+                    <i data-feather="square" stroke-width="1.5"></i>
+                </button>
+                <button class="btn-icon">
+                    <i data-feather="mic-off" stroke-width="1.5"></i>
+                </button>
+            </div>
+        </section>
+
+        <!-- Archive / Idle State (Standard Cards) -->
+        <div>
+            <h3 style="margin-bottom: 1rem; color: var(--text-primary);">Recent Intelligence</h3>
+            <div class="archive-grid">
+                
+                <div class="card-standard">
+                    <div class="card-header">
+                        <span class="tag">Yesterday</span>
+                        <i data-feather="more-horizontal" stroke-width="1.5" style="color: var(--text-secondary);"></i>
+                    </div>
+                    <h3>Design System Review</h3>
+                    <p>Discussed new component architecture and variable naming conventions.</p>
+                    <p class="insight-text"><i data-feather="zap" stroke-width="1.5" style="width: 14px; height: 14px;"></i> 3 Action Items Extracted</p>
+                </div>
+
+                <div class="card-standard">
+                    <div class="card-header">
+                        <span class="tag">Oct 12</span>
+                        <i data-feather="more-horizontal" stroke-width="1.5" style="color: var(--text-secondary);"></i>
+                    </div>
+                    <h3>Investor Pitch Prep</h3>
+                    <p>Finalized the deck and practiced the local-first security pitch.</p>
+                    <p style="color: var(--accent-cyan); font-weight: 500; margin-top: 1rem; display: flex; align-items: center; gap: 0.25rem;">
+                        <i data-feather="check-circle" stroke-width="1.5" style="width: 14px; height: 14px;"></i> Summary Synced
+                    </p>
+                </div>
+
+                <div class="card-standard">
+                    <div class="card-header">
+                        <span class="tag">Oct 10</span>
+                        <i data-feather="more-horizontal" stroke-width="1.5" style="color: var(--text-secondary);"></i>
+                    </div>
+                    <h3>Engineering Standup</h3>
+                    <p>Blocked on the new WebRTC implementation. Need to review STUN/TURN configs.</p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Initialize Feather icons
+        feather.replace();
+    </script>
+</body>
+</html>
