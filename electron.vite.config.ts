@@ -4,7 +4,10 @@ export default defineConfig({
   main: {
     build: {
       rollupOptions: {
-        input: 'src/main/index.ts'
+        input: {
+          index: 'src/main/index.ts',
+          worker: 'src/main/pipeline/worker.ts'
+        }
       }
     },
     plugins: [externalizeDepsPlugin()]

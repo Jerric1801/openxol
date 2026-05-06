@@ -1,22 +1,18 @@
-import { app, BrowserWindow, ipcMain, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, utilityProcess } from 'electron'
 import path from 'path'
 import log from 'electron-log'
-
-// JS pipeline/utils — typed as any until Phase 2 TypeScript migration
-// reason: allowJs transition; types defined incrementally
-/* eslint-disable @typescript-eslint/no-var-requires */
-const MeetingPipeline = require('./pipeline/orchestrator')
-const ConfigManager = require('./utils/config-manager')
-const SetupManager = require('./utils/setup-manager')
-/* eslint-enable @typescript-eslint/no-var-requires */
+import { ConfigManager } from './utils/config-manager'
+import { SetupManager } from './utils/setup-manager'
+import { RecordingManager } from './utils/recording-manager'
+import type { Config } from '../types/config'
 
 let mainWindow: BrowserWindow | null = null
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let configManager: any
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-let currentPipeline: any | null = null
+let configManager: ConfigManager
+let activeWorker: any = null
 
 const setupManager = new SetupManager()
+const recordingManager = new RecordingManager()
+
 
 // out/main/ → ../../src/renderer/ resolves to project root /src/renderer/ in both dev and packaged ASAR
 function rendererFile(html: string): string {
@@ -42,7 +38,7 @@ async function createWindow(): Promise<void> {
     mainWindow.loadFile(rendererFile('index.html'))
   } else {
     log.info('Setup incomplete. Launching Setup Wizard...')
-    log.info(`Missing components: ${(status.missing as string[])?.join(', ') ?? 'unknown'}`)
+    log.info(`Missing components: ${status.missing?.join(', ') ?? 'unknown'}`)
     mainWindow.loadFile(rendererFile('setup.html'))
   }
 
@@ -104,7 +100,7 @@ ipcMain.handle('get-config', () => {
   return configManager.getConfig()
 })
 
-ipcMain.handle('save-config', (_event: Electron.IpcMainInvokeEvent, config: unknown) => {
+ipcMain.handle('save-config', (_event: Electron.IpcMainInvokeEvent, config: Config) => {
   return configManager.saveConfig(config)
 })
 
@@ -125,7 +121,6 @@ ipcMain.handle('select-output-directory', async () => {
   const result = await dialog.showOpenDialog(mainWindow, {
     properties: ['openDirectory']
   })
-  // openDirectory still returns filePaths, not directoryPaths
   return result.canceled || result.filePaths.length === 0
     ? null
     : (result.filePaths[0] ?? null)
@@ -133,29 +128,70 @@ ipcMain.handle('select-output-directory', async () => {
 
 ipcMain.handle(
   'process-audio',
-  async (_event: Electron.IpcMainInvokeEvent, audioPath: string, config: unknown) => {
-    const pipeline = new MeetingPipeline(config)
-    currentPipeline = pipeline
-    try {
-      const result = await pipeline.process(audioPath, (progress: unknown) => {
-        if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('processing-progress', progress)
+  async (_event: Electron.IpcMainInvokeEvent, audioPath: string, config: Config) => {
+    return new Promise((resolve) => {
+      const workerPath = path.join(__dirname, 'worker.js')
+      const child = utilityProcess.fork(workerPath)
+      activeWorker = child
+
+      child.postMessage({ type: 'start', audioPath, config })
+
+      child.on('message', (message: any) => {
+        if (message.type === 'progress') {
+          if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send('processing-progress', message.data)
+          }
+        } else if (message.type === 'result') {
+          activeWorker = null
+          resolve({ success: true, result: message.data })
+        } else if (message.type === 'error') {
+          log.error('Worker error:', message.data)
+          activeWorker = null
+          resolve({ success: false, message: message.data.message })
         }
       })
-      return { success: true, result }
-    } finally {
-      currentPipeline = null
-    }
+
+      child.on('exit', (code) => {
+        activeWorker = null
+        if (code !== 0) {
+          log.warn(`Worker exited with code ${code}`)
+          resolve({ success: false, message: `Worker exited with code ${code}` })
+        }
+      })
+    })
   }
 )
 
 ipcMain.handle('cancel-processing', () => {
-  if (currentPipeline) {
-    log.info('Cancelling current processing pipeline...')
-    currentPipeline.cancel()
+  if (activeWorker) {
+    log.info('Terminating active worker...')
+    activeWorker.kill()
+    activeWorker = null
     return { success: true }
   }
   return { success: false, message: 'No processing in progress' }
 })
 
 ipcMain.handle('get-app-version', () => app.getVersion())
+
+// Recording IPC Handlers
+ipcMain.handle('get-desktop-sources', async () => {
+  return await recordingManager.getDesktopSources()
+})
+
+ipcMain.handle('recording-start', async (_event, filePath: string) => {
+  return await recordingManager.startRecording(filePath)
+})
+
+ipcMain.on('recording-chunk', (_event, chunk: ArrayBuffer) => {
+  recordingManager.handleChunk(chunk)
+})
+
+ipcMain.handle('recording-stop', async () => {
+  return await recordingManager.stopRecording()
+})
+
+ipcMain.on('recording-cancel', () => {
+  recordingManager.cancelRecording()
+})
+

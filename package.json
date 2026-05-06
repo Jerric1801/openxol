@@ -7,9 +7,11 @@
     "dev": "electron-vite dev",
     "start": "electron-vite preview",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "build": "electron-vite build && electron-builder",
     "build:mac": "electron-vite build && electron-builder --mac",
-    "build:mac:dev": "electron-vite build && electron-builder --mac --arch=arm64",
+    "build:mac:dev": "electron-vite build && electron-builder --mac --arm64",
     "build:win": "electron-vite build && electron-builder --win",
     "build:linux": "electron-vite build && electron-builder --linux"
   },
@@ -25,10 +27,12 @@
   "license": "MIT",
   "devDependencies": {
     "@types/node": "^22.0.0",
+    "@vitest/coverage-v8": "^4.1.5",
     "electron": "^28.0.0",
     "electron-builder": "^24.9.1",
     "electron-vite": "^2.3.0",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.5"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
