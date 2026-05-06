@@ -23,8 +23,8 @@ function getBinaryDir(): string {
     log.warn(`No binary dir found. Tried: ${candidates.join(', ')}`)
     return candidates[0] || ''
   }
-  // Dev: out/main/ (post-bundle __dirname) → ../../ = project root
-  return path.join(__dirname, '../../bin', PLATFORM_DIR)
+  // Dev: app.getAppPath() points to project root
+  return path.join(app.getAppPath(), 'bin', PLATFORM_DIR)
 }
 
 export function getBinaryPath(name: string): string {

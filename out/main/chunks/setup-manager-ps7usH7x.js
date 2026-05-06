@@ -81,7 +81,7 @@ function getBinaryDir() {
     log.warn(`No binary dir found. Tried: ${candidates.join(", ")}`);
     return candidates[0] || "";
   }
-  return path.join(__dirname, "../../bin", PLATFORM_DIR);
+  return path.join(electron.app.getAppPath(), "bin", PLATFORM_DIR);
 }
 function getBinaryPath(name) {
   const filename = process.platform === "win32" ? `${name}.exe` : name;
@@ -134,7 +134,7 @@ class SetupManager {
   async checkSetupComplete() {
     const whisperPath = this.getBinaryPath("whisper");
     const ffmpegPath = this.getBinaryPath("ffmpeg");
-    const modelPath = path.join(this.modelsPath, "ggml-base.en.bin");
+    const modelPath = await getModelPath("base.en");
     const whisperOk = await this.checkFileExists(whisperPath);
     const ffmpegOk = await this.checkFileExists(ffmpegPath);
     const modelOk = await this.checkFileExists(modelPath);

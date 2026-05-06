@@ -25,7 +25,7 @@ const electron = require("electron");
 const path = require("path");
 const log = require("electron-log");
 const os = require("os");
-const setupManager$1 = require("./chunks/setup-manager-BTNLMh1j.js");
+const setupManager$1 = require("./chunks/setup-manager-ps7usH7x.js");
 const fs = require("fs");
 const child_process = require("child_process");
 require("https");

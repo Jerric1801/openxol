@@ -37,10 +37,10 @@ export class SetupManager {
     }
   }
 
-  async checkSetupComplete(): Promise<SetupStatus & { summaries?: string }> {
+  async checkSetupComplete(): Promise<SetupStatus> {
     const whisperPath = this.getBinaryPath('whisper')
     const ffmpegPath = this.getBinaryPath('ffmpeg')
-    const modelPath = path.join(this.modelsPath, 'ggml-base.en.bin')
+    const modelPath = await binaryPaths.getModelPath('base.en')
     
     const whisperOk = await this.checkFileExists(whisperPath)
     const ffmpegOk = await this.checkFileExists(ffmpegPath)
