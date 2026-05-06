@@ -6,51 +6,62 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm install          # install dependencies
-npm run dev          # run in development mode (opens DevTools automatically)
-npm start            # run without DevTools
-npm run build:mac    # build macOS DMG
-npm run build:win    # build Windows NSIS installer
-npm run build:linux  # build Linux AppImage
-npm run build        # build for current platform
+npm run dev          # TypeScript watch + Electron (DevTools open automatically)
+npm run start        # run built output (requires prior build)
+npm run typecheck    # TypeScript type-check without emitting
+npm run build:mac    # compile + build macOS DMG
+npm run build:win    # compile + build Windows NSIS installer
+npm run build:linux  # compile + build Linux AppImage
+npm run build        # compile + build for current platform
 ```
 
-No test suite or linter configured.
+No test suite configured yet (Phase 3). No linter configured yet.
 
 ## Architecture
 
-Electron desktop app. Two processes communicate via IPC:
+Electron desktop app — open-source alternative to otter.ai. See `docs/ARCHITECTURE.md` for full detail.
 
-**Main process** (`src/main.js`) — orchestrates everything. Registers all IPC handlers. On launch, runs a gateway check: if whisper binary + ffmpeg binary + `ggml-base.en.bin` model all exist on disk, loads `index.html`; otherwise loads `setup.html` for the setup wizard.
+**Main process** (`src/main/index.ts`) — TypeScript, compiled by electron-vite to `out/main/index.js`. Registers all IPC handlers. On launch runs a gateway check: if whisper binary + ffmpeg binary + `ggml-base.en.bin` model all exist on disk, loads `index.html`; otherwise loads `setup.html`.
 
-**Renderer process** (`src/renderer/`) — vanilla JS/HTML/CSS, no framework. Accesses main process only through `window.electronAPI` (exposed via `src/preload.js` contextBridge). Two screens:
-- `index.html` + `js/app.js` — main app UI
-- `setup.html` + `js/setup.js` — first-run setup wizard
+**Renderer process** (`src/renderer/`) — vanilla JS/HTML/CSS (no framework, no bundler yet — Phase 2). Accesses main process only via `window.electronAPI` (exposed by `src/preload/index.ts`). Two screens: `index.html` (main app) and `setup.html` (first-run wizard). Loaded via `mainWindow.loadFile()` as static files — not processed by Vite.
 
-**IPC bridge** (`src/preload.js`) — exposes `window.electronAPI` with methods for config, file selection, audio processing, setup, and progress listeners.
+**Preload** (`src/preload/index.ts`) — TypeScript, compiled by electron-vite to `out/preload/index.js`. Exposes `window.electronAPI` via contextBridge.
 
 ## Processing Pipeline
 
-`src/pipeline/orchestrator.js` — `MeetingPipeline` runs 4 steps sequentially:
+`src/main/pipeline/orchestrator.js` — `MeetingPipeline` runs 4 steps:
 
-1. **Transcription** (`transcription.js`) — spawns whisper.cpp binary as child process. **Critical**: pipeline aborts if this fails.
-2. **Diarization** (`diarization.js`) — optional speaker identification. Non-critical; pipeline continues on failure.
-3. **Analysis** (`analysis.js`) — sends transcript to Gemini API (`@google/generative-ai`). Non-critical.
-4. **DOCX generation** (`docx-gen.js`) — produces report using `docx` package. Non-critical.
+1. **Transcription** (`transcription.js`) — spawns whisper.cpp binary. **Critical**: pipeline aborts if this fails.
+2. **Diarization** (`diarization.js`) — optional speaker identification. Non-critical.
+3. **Analysis** (`analysis.js`) — Gemini API (`@google/generative-ai`). Non-critical.
+4. **DOCX generation** (`docx-gen.js`) — `docx` package. Non-critical.
 
-Pipeline supports cancellation via `isCancelled` flag (set by `cancel()` method). Progress updates flow from pipeline → main process → renderer via `mainWindow.webContents.send('processing-progress', ...)`.
-
-Analysis prefers diarized transcript over raw transcript when both exist. `MeetingPipeline.extractTranscriptText()` is a static helper that normalizes the transcript object (handles string, `{text}`, `{segments}`, `{raw}` shapes from whisper.cpp).
+Pipeline supports cancellation via `isCancelled` flag. Progress flows via `mainWindow.webContents.send('processing-progress', ...)`. Analysis prefers diarized transcript; falls back to raw. `MeetingPipeline.extractTranscriptText()` normalises transcript object shapes.
 
 ## Key Utilities
 
-**`src/utils/config-manager.js`** — wraps `electron-store`. Must call `await configManager.init()` before use (dynamic ES module import). Config stored in system userData dir. Default AI model: `gemini-2.5-flash-lite`.
+**`src/main/utils/config-manager.js`** — wraps `electron-store`. Call `await configManager.init()` before use (dynamic ESM import). Default AI model: `gemini-2.5-flash-lite`.
 
-**`src/utils/setup-manager.js`** — checks/downloads required components. Binaries expected at `bin/darwin/` or `bin/win32/` in dev; at `process.resourcesPath/bin/{platform}/` in packaged app. Whisper model (`ggml-base.en.bin`) stored in `userData/models/whisper/` and downloaded from HuggingFace on first run.
+**`src/main/utils/setup-manager.js`** — checks/downloads required components. Dev binaries: `bin/darwin/` or `bin/win32/`. Packaged: `process.resourcesPath/bin/<platform>/`. Model stored in `userData/models/whisper/`, downloaded from HuggingFace on first run.
+
+## Standards
+
+Language: **TypeScript strict** for `src/main/` and `src/preload/`. No `any` without `// reason:` comment. See `docs/STANDARDS.md` for full naming conventions and rules.
+
+## Docs
+
+| File | Purpose |
+|------|---------|
+| `docs/ARCHITECTURE.md` | IPC channel registry, pipeline contract, config schema |
+| `docs/STANDARDS.md` | Naming, TypeScript rules, error shapes, git conventions |
+| `docs/BRANDING.md` | Name, pronunciation, colors, logo, voice |
+| `docs/CONTRIBUTING.md` | Dev setup, binary placement, PR process |
 
 ## Binary & Model Requirements
 
-Dev setup needs binaries placed manually:
-- `bin/darwin/whisper` and `bin/darwin/ffmpeg` (macOS)
-- `bin/win32/whisper.exe`, `bin/win32/ffmpeg.exe` (Windows)
+Dev needs binaries placed manually:
+- `bin/darwin/whisper`, `bin/darwin/ffmpeg` (macOS)
+- `bin/win32/whisper.exe`, `bin/win32/ffmpeg.exe`, `bin/win32/whisper.dll`, `bin/win32/SDL2.dll` (Windows)
+- `bin/linux/whisper`, `bin/linux/ffmpeg` (Linux)
 
-Model (`ggml-base.en.bin`) downloads automatically on first run via setup wizard. Can also be placed manually in `resources/models/whisper/` for bundling.
+Model (`ggml-base.en.bin`) downloads automatically via setup wizard, or place manually in `resources/models/whisper/`.

@@ -1,9 +1,10 @@
-appId: com.meetinganalysis.app
-productName: Meeting Analysis
+appId: com.openxol.app
+productName: OpenXol
 directories:
   output: build
 files:
-  - 'src/**/*'
+  - 'out/**/*'
+  - 'src/renderer/**/*'
   - 'resources/**/*'
   - 'assets/**/*'
   - 'package.json'
@@ -24,7 +25,3 @@ win:
 linux:
   target: AppImage
   icon: assets/icon.png
-
-
-
-
