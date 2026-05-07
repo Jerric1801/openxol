@@ -25,9 +25,9 @@ electron.contextBridge.exposeInMainWorld("electronAPI", {
   notifySetupFinished: () => {
     electron.ipcRenderer.send("setup-finished");
   },
-  // Recording (Planned)
+  // Recording
   getDesktopSources: () => electron.ipcRenderer.invoke("get-desktop-sources"),
-  startRecording: (filePath) => electron.ipcRenderer.invoke("recording-start", filePath),
+  startRecording: () => electron.ipcRenderer.invoke("recording-start"),
   sendRecordingChunk: (chunk) => electron.ipcRenderer.send("recording-chunk", chunk),
   stopRecording: () => electron.ipcRenderer.invoke("recording-stop"),
   cancelRecording: () => electron.ipcRenderer.send("recording-cancel"),

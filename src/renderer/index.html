@@ -43,23 +43,56 @@
 
             <div class="dashboard-grid">
                 <div class="main-actions-stack" style="display: flex; flex-direction: column; gap: 2rem;">
-                    <!-- Hero Section: Active Recording / Upload -->
+                    <!-- Hero Section: Upload + Record -->
                     <section class="hero-section card" id="heroSection">
-                        <div class="upload-area" id="uploadArea">
-                            <div class="upload-content">
-                                <div class="icon-circle">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                        <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
-                                        <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
-                                        <line x1="12" y1="19" x2="12" y2="23"></line>
-                                        <line x1="8" y1="23" x2="16" y2="23"></line>
-                                    </svg>
+
+                        <!-- Idle: two-panel -->
+                        <div class="hero-idle" id="heroIdle">
+                            <div class="upload-area" id="uploadArea">
+                                <div class="hero-action-content">
+                                    <div class="icon-circle">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                            <polyline points="17 8 12 3 7 8"></polyline>
+                                            <line x1="12" y1="3" x2="12" y2="15"></line>
+                                        </svg>
+                                    </div>
+                                    <h3>Upload Audio</h3>
+                                    <p>Drop files or click to browse</p>
                                 </div>
-                                <h2>Start New Task</h2>
-                                <p style="font-size: 0.875rem;">Drop audio files or click to begin</p>
+                            </div>
+                            <div class="hero-divider"></div>
+                            <div class="record-area" id="recordArea">
+                                <div class="hero-action-content">
+                                    <div class="icon-circle icon-circle--record">
+                                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                                            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                                            <line x1="12" y1="19" x2="12" y2="23"></line>
+                                            <line x1="8" y1="23" x2="16" y2="23"></line>
+                                        </svg>
+                                    </div>
+                                    <h3>Record</h3>
+                                    <p>Capture microphone audio</p>
+                                </div>
                             </div>
                             <input type="file" id="fileInput" accept="audio/*" multiple style="display: none;">
                         </div>
+
+                        <!-- Recording active state -->
+                        <div class="hero-recording" id="heroRecording" style="display:none;">
+                            <div class="recording-pulse">
+                                <span class="recording-dot"></span>
+                                <span class="recording-label">Recording</span>
+                            </div>
+                            <canvas id="waveformCanvas" class="waveform-canvas"></canvas>
+                            <div class="recording-timer" id="recordingTimer">00:00</div>
+                            <div class="recording-controls">
+                                <button class="btn-stop" id="stopRecordBtn">Stop &amp; Process</button>
+                                <button class="btn-cancel-rec" id="cancelRecordBtn">Cancel</button>
+                            </div>
+                        </div>
+
                     </section>
 
                     <!-- Processing Queue -->

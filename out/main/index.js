@@ -336,7 +336,11 @@ electron.ipcMain.handle("get-app-version", () => electron.app.getVersion());
 electron.ipcMain.handle("get-desktop-sources", async () => {
   return await recordingManager.getDesktopSources();
 });
-electron.ipcMain.handle("recording-start", async (_event, filePath) => {
+electron.ipcMain.handle("recording-start", async () => {
+  const userData = process.env["APP_USER_DATA"] || "";
+  const recordingsDir = path.join(userData, "recordings");
+  const timestamp = (/* @__PURE__ */ new Date()).toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const filePath = path.join(recordingsDir, `recording-${timestamp}.webm`);
   return await recordingManager.startRecording(filePath);
 });
 electron.ipcMain.on("recording-chunk", (_event, chunk) => {

@@ -42,11 +42,11 @@ contextBridge.exposeInMainWorld('electronAPI', {
     ipcRenderer.send('setup-finished')
   },
 
-  // Recording (Planned)
+  // Recording
   getDesktopSources: (): Promise<any[]> =>
     ipcRenderer.invoke('get-desktop-sources'),
-  startRecording: (filePath: string): Promise<boolean> =>
-    ipcRenderer.invoke('recording-start', filePath),
+  startRecording: (): Promise<boolean> =>
+    ipcRenderer.invoke('recording-start'),
   sendRecordingChunk: (chunk: ArrayBuffer): void =>
     ipcRenderer.send('recording-chunk', chunk),
   stopRecording: (): Promise<string | null> =>

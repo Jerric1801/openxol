@@ -195,7 +195,11 @@ ipcMain.handle('get-desktop-sources', async () => {
   return await recordingManager.getDesktopSources()
 })
 
-ipcMain.handle('recording-start', async (_event, filePath: string) => {
+ipcMain.handle('recording-start', async () => {
+  const userData = process.env['APP_USER_DATA'] || ''
+  const recordingsDir = path.join(userData, 'recordings')
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)
+  const filePath = path.join(recordingsDir, `recording-${timestamp}.webm`)
   return await recordingManager.startRecording(filePath)
 })
 

@@ -227,46 +227,175 @@ p {
     letter-spacing: -0.02em;
 }
 
-/* Hero Section / Upload Area */
+/* Hero Section */
 .hero-section {
     padding: 0;
     overflow: hidden;
     transition: all var(--transition-slow);
+    min-height: 220px;
 }
 
-.upload-area {
-    padding: 4rem 2rem;
-    text-align: center;
+/* Idle: two-panel split */
+.hero-idle {
+    display: flex;
+    height: 100%;
+    min-height: 220px;
+}
+
+.upload-area,
+.record-area {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: background var(--transition-base);
+    padding: 2.5rem 1.5rem;
 }
 
 .upload-area:hover {
-    background: rgba(72, 209, 226, 0.03);
+    background: rgba(72, 209, 226, 0.04);
+}
+
+.record-area:hover {
+    background: rgba(255, 75, 75, 0.03);
+}
+
+.hero-divider {
+    width: 1px;
+    background: var(--border-subtle);
+    margin: 1.5rem 0;
+}
+
+.hero-action-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.5rem;
+}
+
+.hero-action-content h3 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.hero-action-content p {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin: 0;
 }
 
 .icon-circle {
-    width: 64px;
-    height: 64px;
+    width: 52px;
+    height: 52px;
     background: var(--bg-page);
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1.5rem;
+    margin-bottom: 0.75rem;
     color: var(--accent-intelligence);
     box-shadow: var(--shadow-standard);
+    transition: all var(--transition-base);
 }
 
-.upload-area h2 {
-    font-size: 1.5rem;
+.icon-circle--record {
+    color: var(--accent-recording);
+}
+
+.record-area:hover .icon-circle--record {
+    background: rgba(255, 75, 75, 0.08);
+    box-shadow: 0 0 0 6px rgba(255, 75, 75, 0.06);
+}
+
+/* Recording active state */
+.hero-recording {
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.25rem;
+    padding: 2rem;
+    min-height: 220px;
+}
+
+.recording-pulse {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.recording-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--accent-recording);
+    animation: pulse-red 1.5s infinite;
+}
+
+.recording-label {
+    font-size: 0.75rem;
     font-weight: 700;
-    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--accent-recording);
 }
 
-.upload-area p {
+.waveform-canvas {
+    width: 100%;
+    height: 64px;
+    border-radius: 8px;
+}
+
+.recording-timer {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.recording-controls {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.btn-stop {
+    padding: 0.625rem 1.5rem;
+    background: var(--accent-recording);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.875rem;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(255, 75, 75, 0.3);
+    transition: all var(--transition-base);
+}
+
+.btn-stop:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(255, 75, 75, 0.4);
+}
+
+.btn-cancel-rec {
+    padding: 0.625rem 1.25rem;
+    background: transparent;
     color: var(--text-secondary);
-    margin-bottom: 1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.875rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.btn-cancel-rec:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
 }
 
 .file-formats {
@@ -1073,19 +1202,11 @@ p {
     background: rgba(16, 185, 129, 0.05);
 }
 
-/* Hero Active State */
+/* Hero Active State (recording) */
 .hero-section.hero-active {
-    background: rgba(255, 255, 255, 0.4);
-    backdrop-filter: blur(20px);
-    border: 2px solid var(--accent-recording);
-    box-shadow: 0 0 30px rgba(255, 75, 75, 0.2);
-    transform: scale(1.02);
-}
-
-.hero-section.hero-active .icon-circle {
-    background: var(--accent-recording);
-    color: white;
-    animation: pulse-red 2s infinite;
+    border-color: rgba(255, 75, 75, 0.4);
+    box-shadow: 0 0 0 1px rgba(255, 75, 75, 0.15), 0 8px 32px rgba(255, 75, 75, 0.12);
+    background: rgba(255, 252, 252, 0.98);
 }
 
 @keyframes pulse-red {
