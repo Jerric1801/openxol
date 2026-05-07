@@ -11,6 +11,8 @@ export class RecordingUI {
   private startTime = 0
   private isRecording = false
   private recordMode: 'mic' | 'system-mic' = 'mic'
+  private blackholeDeviceId: string | null = null
+  private platform: string = ''
 
   constructor() {
     this.setupEventListeners()
@@ -18,16 +20,31 @@ export class RecordingUI {
   }
 
   private initPlatformCapabilities(): void {
-    const platform: string = (window as any).electronAPI.getPlatform()
-    if (platform === 'darwin') {
-      const bar = document.getElementById('recordModeBar')
-      if (bar) bar.style.display = 'none'
-    }
+    this.platform = (window as any).electronAPI.getPlatform()
+
+    if (this.platform !== 'darwin') return
+
+    // macOS: hide by default, reveal only if BlackHole is installed
+    const bar = document.getElementById('recordModeBar')
+    if (bar) bar.style.display = 'none'
+
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const blackhole = devices.find(
+        (d) => d.kind === 'audioinput' && d.label.toLowerCase().includes('blackhole')
+      )
+      if (blackhole?.deviceId) {
+        this.blackholeDeviceId = blackhole.deviceId
+        if (bar) bar.style.display = ''
+        const pill = document.getElementById('modeSystemMic')
+        if (pill) pill.title = 'Mic + System audio via BlackHole'
+      }
+    }).catch(() => {
+      // Enumeration failed — keep mode bar hidden
+    })
   }
 
   private setupEventListeners(): void {
     document.getElementById('recordArea')?.addEventListener('click', (e) => {
-      // Don't start recording if user clicked a mode pill
       if ((e.target as HTMLElement).closest('.record-mode-bar')) return
       this.startRecording()
     })
@@ -54,7 +71,15 @@ export class RecordingUI {
       el.classList.toggle('active', (el as HTMLElement).dataset['mode'] === mode)
     })
     const desc = document.getElementById('recordModeDesc')
-    if (desc) desc.textContent = mode === 'mic' ? 'Microphone only' : 'Mic + System audio'
+    if (desc) {
+      if (mode === 'mic') {
+        desc.textContent = 'Microphone only'
+      } else {
+        desc.textContent = this.blackholeDeviceId
+          ? 'Mic + System (BlackHole)'
+          : 'Mic + System audio'
+      }
+    }
   }
 
   async startRecording(): Promise<void> {
@@ -68,26 +93,33 @@ export class RecordingUI {
       let recordStream: MediaStream
 
       if (this.recordMode === 'system-mic') {
-        // getDisplayMedia triggers OS picker; user selects screen/window with audio
-        const displayStream = await navigator.mediaDevices.getDisplayMedia({
-          audio: true,
-          video: true
-        })
-        // Stop video tracks immediately — we only need the audio
-        displayStream.getVideoTracks().forEach((t) => t.stop())
-        this.systemStream = displayStream
-
         const dest = this.audioContext.createMediaStreamDestination()
         const micSrc = this.audioContext.createMediaStreamSource(micStream)
-
-        // Waveform visualises mic only
         micSrc.connect(this.analyser)
         micSrc.connect(dest)
 
-        // System audio not available on macOS without a virtual audio driver
-        if (displayStream.getAudioTracks().length > 0) {
-          const sysSrc = this.audioContext.createMediaStreamSource(displayStream)
+        if (this.blackholeDeviceId) {
+          // macOS + BlackHole: capture system audio routed through BlackHole input
+          const bhStream = await navigator.mediaDevices.getUserMedia({
+            audio: { deviceId: { exact: this.blackholeDeviceId } },
+            video: false
+          })
+          this.systemStream = bhStream
+          const sysSrc = this.audioContext.createMediaStreamSource(bhStream)
           sysSrc.connect(dest)
+        } else {
+          // Windows/Linux: getDisplayMedia with loopback audio
+          const displayStream = await navigator.mediaDevices.getDisplayMedia({
+            audio: true,
+            video: true
+          })
+          displayStream.getVideoTracks().forEach((t) => t.stop())
+          this.systemStream = displayStream
+          // System audio not available on macOS without a virtual audio driver
+          if (displayStream.getAudioTracks().length > 0) {
+            const sysSrc = this.audioContext.createMediaStreamSource(displayStream)
+            sysSrc.connect(dest)
+          }
         }
 
         recordStream = dest.stream
@@ -186,7 +218,13 @@ export class RecordingUI {
 
     const label = rec?.querySelector('.recording-label')
     if (label) {
-      label.textContent = this.recordMode === 'system-mic' ? 'Recording — Mic + System' : 'Recording'
+      if (this.recordMode === 'system-mic') {
+        label.textContent = this.blackholeDeviceId
+          ? 'Recording — Mic + BlackHole'
+          : 'Recording — Mic + System'
+      } else {
+        label.textContent = 'Recording'
+      }
     }
 
     const canvas = document.getElementById('waveformCanvas') as HTMLCanvasElement | null
