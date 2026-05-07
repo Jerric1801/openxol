@@ -3,21 +3,43 @@ import { fileHandler } from './file-handler'
 export class RecordingUI {
   private mediaRecorder: MediaRecorder | null = null
   private stream: MediaStream | null = null
+  private systemStream: MediaStream | null = null
   private analyser: AnalyserNode | null = null
   private audioContext: AudioContext | null = null
   private animFrameId: number | null = null
   private timerInterval: ReturnType<typeof setInterval> | null = null
   private startTime = 0
   private isRecording = false
+  private recordMode: 'mic' | 'system-mic' = 'mic'
 
   constructor() {
     this.setupEventListeners()
+    this.initPlatformCapabilities()
+  }
+
+  private initPlatformCapabilities(): void {
+    const platform: string = (window as any).electronAPI.getPlatform()
+    if (platform === 'darwin') {
+      const bar = document.getElementById('recordModeBar')
+      if (bar) bar.style.display = 'none'
+    }
   }
 
   private setupEventListeners(): void {
-    document.getElementById('recordArea')?.addEventListener('click', () => {
+    document.getElementById('recordArea')?.addEventListener('click', (e) => {
+      // Don't start recording if user clicked a mode pill
+      if ((e.target as HTMLElement).closest('.record-mode-bar')) return
       this.startRecording()
     })
+
+    document.getElementById('recordModeBar')?.addEventListener('click', (e) => {
+      const pill = (e.target as HTMLElement).closest<HTMLElement>('.record-mode-pill')
+      if (!pill) return
+      e.stopPropagation()
+      const mode = pill.dataset['mode'] as 'mic' | 'system-mic'
+      this.setMode(mode)
+    })
+
     document.getElementById('stopRecordBtn')?.addEventListener('click', () => {
       this.stopRecording()
     })
@@ -26,15 +48,56 @@ export class RecordingUI {
     })
   }
 
+  private setMode(mode: 'mic' | 'system-mic'): void {
+    this.recordMode = mode
+    document.querySelectorAll('.record-mode-pill').forEach((el) => {
+      el.classList.toggle('active', (el as HTMLElement).dataset['mode'] === mode)
+    })
+    const desc = document.getElementById('recordModeDesc')
+    if (desc) desc.textContent = mode === 'mic' ? 'Microphone only' : 'Mic + System audio'
+  }
+
   async startRecording(): Promise<void> {
     try {
-      this.stream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
 
       this.audioContext = new AudioContext()
       this.analyser = this.audioContext.createAnalyser()
       this.analyser.fftSize = 512
-      const source = this.audioContext.createMediaStreamSource(this.stream)
-      source.connect(this.analyser)
+
+      let recordStream: MediaStream
+
+      if (this.recordMode === 'system-mic') {
+        // getDisplayMedia triggers OS picker; user selects screen/window with audio
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+          audio: true,
+          video: true
+        })
+        // Stop video tracks immediately — we only need the audio
+        displayStream.getVideoTracks().forEach((t) => t.stop())
+        this.systemStream = displayStream
+
+        const dest = this.audioContext.createMediaStreamDestination()
+        const micSrc = this.audioContext.createMediaStreamSource(micStream)
+
+        // Waveform visualises mic only
+        micSrc.connect(this.analyser)
+        micSrc.connect(dest)
+
+        // System audio not available on macOS without a virtual audio driver
+        if (displayStream.getAudioTracks().length > 0) {
+          const sysSrc = this.audioContext.createMediaStreamSource(displayStream)
+          sysSrc.connect(dest)
+        }
+
+        recordStream = dest.stream
+      } else {
+        const micSrc = this.audioContext.createMediaStreamSource(micStream)
+        micSrc.connect(this.analyser)
+        recordStream = micStream
+      }
+
+      this.stream = micStream
 
       const ok = await (window as any).electronAPI.startRecording()
       if (!ok) throw new Error('Main process failed to open recording file')
@@ -43,7 +106,7 @@ export class RecordingUI {
         ? 'audio/webm;codecs=opus'
         : 'audio/webm'
 
-      this.mediaRecorder = new MediaRecorder(this.stream, { mimeType })
+      this.mediaRecorder = new MediaRecorder(recordStream, { mimeType })
       this.mediaRecorder.ondataavailable = (e) => {
         if (e.data.size > 0) {
           e.data.arrayBuffer().then((buf) => {
@@ -62,7 +125,9 @@ export class RecordingUI {
       console.error('Recording start failed:', err)
       this.resetUI()
       if (err.name === 'NotAllowedError') {
-        alert('Microphone permission denied. Allow mic access and try again.')
+        alert('Permission denied. Allow access and try again.')
+      } else if (err.name === 'AbortError' || err.name === 'NotReadableError') {
+        // User cancelled getDisplayMedia picker — silent fail
       }
     }
   }
@@ -72,6 +137,7 @@ export class RecordingUI {
 
     this.mediaRecorder?.stop()
     this.stream?.getTracks().forEach((t) => t.stop())
+    this.systemStream?.getTracks().forEach((t) => t.stop())
 
     const wavPath: string | null = await (window as any).electronAPI.stopRecording()
 
@@ -89,6 +155,7 @@ export class RecordingUI {
 
     this.mediaRecorder?.stop()
     this.stream?.getTracks().forEach((t) => t.stop())
+    this.systemStream?.getTracks().forEach((t) => t.stop())
     ;(window as any).electronAPI.cancelRecording()
 
     this.cleanup()
@@ -102,6 +169,7 @@ export class RecordingUI {
     this.audioContext?.close()
     this.mediaRecorder = null
     this.stream = null
+    this.systemStream = null
     this.analyser = null
     this.audioContext = null
     this.timerInterval = null
@@ -116,7 +184,11 @@ export class RecordingUI {
     if (rec) rec.style.display = 'flex'
     hero?.classList.add('hero-active')
 
-    // Size the canvas to its container
+    const label = rec?.querySelector('.recording-label')
+    if (label) {
+      label.textContent = this.recordMode === 'system-mic' ? 'Recording — Mic + System' : 'Recording'
+    }
+
     const canvas = document.getElementById('waveformCanvas') as HTMLCanvasElement | null
     if (canvas) {
       canvas.width = canvas.offsetWidth

@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, dialog, utilityProcess } from 'electron'
+import { app, BrowserWindow, ipcMain, dialog, utilityProcess, desktopCapturer, session } from 'electron'
 import path from 'path'
 import log from 'electron-log'
 import { ConfigManager } from './utils/config-manager'
@@ -95,6 +95,13 @@ app.whenReady().then(async () => {
         log.warn('setup-finished received but required files still missing')
       }
     }
+  })
+
+  // Required for getDisplayMedia() in renderer; auto-selects first screen.
+  // audio:'loopback' captures system audio on Windows; no-op on macOS without a virtual driver.
+  session.defaultSession.setDisplayMediaRequestHandler(async (_request, callback) => {
+    const sources = await desktopCapturer.getSources({ types: ['screen'] })
+    callback({ video: sources[0] ?? undefined, audio: 'loopback' })
   })
 
   await createWindow()

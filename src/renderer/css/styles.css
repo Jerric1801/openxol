@@ -616,6 +616,12 @@ p {
     background: rgba(255, 75, 75, 0.03);
 }
 
+/* Stack mode bar below hero content */
+.record-area {
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
 .hero-divider {
     width: 1px;
     background: var(--border-subtle);
@@ -663,6 +669,44 @@ p {
 .record-area:hover .icon-circle--record {
     background: rgba(255, 75, 75, 0.08);
     box-shadow: 0 0 0 6px rgba(255, 75, 75, 0.06);
+}
+
+/* Record mode toggle pills */
+.record-mode-bar {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+}
+
+.record-mode-pill {
+    padding: 3px 10px;
+    border: none;
+    border-radius: 5px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    font-family: inherit;
+    cursor: pointer;
+    background: transparent;
+    color: var(--text-secondary);
+    transition: all var(--transition-base);
+}
+
+.record-mode-pill:hover {
+    color: var(--text-primary);
+    background: rgba(255,255,255,0.05);
+}
+
+.record-mode-pill.active {
+    background: rgba(255, 75, 75, 0.15);
+    color: var(--accent-recording);
+}
+
+/* Hide mode bar in compact (has-results) mode */
+.app-body.has-results .record-mode-bar {
+    display: none;
 }
 
 /* Recording active state */

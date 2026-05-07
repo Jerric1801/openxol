@@ -62,7 +62,11 @@
                                     </svg>
                                 </div>
                                 <h3>Record</h3>
-                                <p>Capture microphone audio</p>
+                                <p id="recordModeDesc">Microphone only</p>
+                            </div>
+                            <div class="record-mode-bar" id="recordModeBar">
+                                <button class="record-mode-pill active" id="modeMic" data-mode="mic">Mic</button>
+                                <button class="record-mode-pill" id="modeSystemMic" data-mode="system-mic">+ System</button>
                             </div>
                         </div>
                         <input type="file" id="fileInput" accept="audio/*" multiple style="display: none;">

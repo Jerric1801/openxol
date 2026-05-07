@@ -54,6 +54,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
   cancelRecording: (): void =>
     ipcRenderer.send('recording-cancel'),
 
+  getPlatform: (): string => process.platform,
+
   removeAllListeners: (channel: string): void => {
     const allowed = ['processing-progress', 'progress-update'] as const
     if ((allowed as readonly string[]).includes(channel)) {

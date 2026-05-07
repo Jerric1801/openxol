@@ -148,10 +148,8 @@ Ensure Whisper models are in `resources/models/whisper/` with the correct naming
 
 ### API Key Issues
 
-Verify your Gemini API key is correct and has sufficient quota.
+Verify your Gemini API key is correct and sufficient quota.
 
 ## License
-
-MIT
 
 # meeting-analysis-app
