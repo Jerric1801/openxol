@@ -1,4 +1,4 @@
-import { spawn, execSync } from 'child_process'
+import { spawn, execFileSync } from 'child_process'
 import path from 'path'
 import fs from 'fs'
 import fsPromises from 'fs/promises'
@@ -37,14 +37,14 @@ export class DiarizationModule {
 
     // Binary validation logic
     try {
-      const helpOutput = execSync(
-        `"${whisperBin}" --help 2>&1 | head -50 || "${whisperBin}" -h 2>&1 | head -50 || true`,
-        {
-          encoding: 'utf-8',
-          timeout: 2000,
-          maxBuffer: 16384
+      const runHelp = (flag: string): string => {
+        try {
+          return execFileSync(whisperBin, [flag], { encoding: 'utf-8', timeout: 2000, maxBuffer: 16384 })
+        } catch (e: any) {
+          return String(e.stdout || '') + String(e.stderr || '')
         }
-      )
+      }
+      const helpOutput = runHelp('--help') || runHelp('-h')
 
       const isPythonWhisper =
         helpOutput.includes('--output_format') ||

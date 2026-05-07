@@ -1,8 +1,12 @@
 import { marked } from 'marked'
+import DOMPurify from 'dompurify'
 import type { PipelineResult, PipelineError } from '../../types/pipeline'
 
-// Render markdown safely — marked converts to HTML, we never eval user script
 marked.setOptions({ gfm: true, breaks: true })
+
+// Sanitize Gemini-generated HTML to prevent prompt-injection XSS
+const sanitize = (html: string): string =>
+  DOMPurify.sanitize(html, { USE_PROFILES: { html: true } })
 
 export class ResultsManager {
   private currentResult: PipelineResult | null = null
@@ -182,7 +186,7 @@ export class ResultsManager {
             <span>Copy</span>
           </button>
         </div>
-        <div class="analysis-section-body md-body">${section.content ? marked.parse(section.content) : '<p class="no-content">No content</p>'}</div>
+        <div class="analysis-section-body md-body">${section.content ? sanitize(marked.parse(section.content) as string) : '<p class="no-content">No content</p>'}</div>
         <div class="analysis-section-raw" hidden>${this.escapeHtml(section.content)}</div>
       </div>
     `

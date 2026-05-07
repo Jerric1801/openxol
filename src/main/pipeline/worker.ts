@@ -1,11 +1,14 @@
-import { parentPort } from 'worker_threads'
+import log from 'electron-log'
 import { MeetingPipeline } from './orchestrator'
 import type { Config } from '../../types/config'
 
-// Note: Electron's utilityProcess doesn't use worker_threads parentPort,
-// it uses process.parentPort (if version >= 22) or just process.on('message').
-// However, electron-vite might bundle this as a Node script.
-// Let's check Electron version in package.json. It's ^28.0.0.
+// utilityProcess has no stdout/stderr pipe — disable console transport before
+// any pipeline modules import electron-log and attempt to write to stdout.
+log.transports.console.level = false
+
+// Belt-and-suspenders: swallow EPIPE from any stray stdout/stderr write
+process.stdout.on('error', (err: NodeJS.ErrnoException) => { if (err.code !== 'EPIPE') throw err })
+process.stderr.on('error', (err: NodeJS.ErrnoException) => { if (err.code !== 'EPIPE') throw err })
 
 if (process.parentPort) {
   process.parentPort.on('message', async (e) => {

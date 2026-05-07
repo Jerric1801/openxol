@@ -142,9 +142,19 @@ ipcMain.handle('select-output-directory', async () => {
     : (result.filePaths[0] ?? null)
 })
 
+const ALLOWED_AUDIO_EXTENSIONS = new Set(['.mp3', '.wav', '.m4a', '.aac', '.flac', '.ogg', '.webm', '.mp4', '.mov', '.weba'])
+
 ipcMain.handle(
   'process-audio',
   async (_event: Electron.IpcMainInvokeEvent, audioPath: string, config: Config) => {
+    if (!path.isAbsolute(audioPath)) {
+      return { success: false, message: 'Invalid audio path: must be absolute' }
+    }
+    const ext = path.extname(audioPath).toLowerCase()
+    if (!ALLOWED_AUDIO_EXTENSIONS.has(ext)) {
+      return { success: false, message: `Unsupported file format: ${ext}` }
+    }
+
     return new Promise((resolve) => {
       const workerPath = path.join(__dirname, 'worker.js')
       const child = utilityProcess.fork(workerPath)

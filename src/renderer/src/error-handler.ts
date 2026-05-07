@@ -136,7 +136,7 @@ export class ErrorHandler {
     const actionsEl = document.getElementById('errorActions')
 
     if (modal && messageEl && detailsEl && actionsEl) {
-      messageEl.innerHTML = `<strong>${parsed.title}</strong><p>${parsed.message}</p>`
+      messageEl.innerHTML = `<strong>${this.escapeHtml(parsed.title)}</strong><p>${this.escapeHtml(parsed.message)}</p>`
       detailsEl.innerHTML = `<details><summary>Error Details</summary><pre>${this.escapeHtml(
         parsed.details
       )}</pre></details>`
@@ -197,7 +197,7 @@ export class ErrorHandler {
       <div class="error-banner-content">
         <span>⚠️ Some steps failed:</span>
         <ul>
-          ${errors.map((e) => `<li>${e.step}: ${e.error}</li>`).join('')}
+          ${errors.map((e) => `<li>${this.escapeHtml(String(e.step))}: ${this.escapeHtml(String(e.error))}</li>`).join('')}
         </ul>
         <button class="error-banner-close">×</button>
       </div>

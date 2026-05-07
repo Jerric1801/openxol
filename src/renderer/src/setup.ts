@@ -108,7 +108,11 @@ export class SetupUI {
   private showError(message: string): void {
     const container = document.getElementById('errorContainer')
     if (container) {
-      container.innerHTML = `<div class="error-message">${message}</div>`
+      const div = document.createElement('div')
+      div.className = 'error-message'
+      div.textContent = message
+      container.innerHTML = ''
+      container.appendChild(div)
     }
   }
 }
