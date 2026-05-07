@@ -16,7 +16,7 @@ You need to add whisper.cpp and ffmpeg binaries for your platform:
 #### macOS (darwin)
 ```bash
 # Download whisper.cpp binary
-# Place it at: bin/darwin/whisper
+# Place it at: bin/darwin/whisper
 
 # Download ffmpeg binary  
 # Place it at: bin/darwin/ffmpeg

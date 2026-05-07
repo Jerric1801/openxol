@@ -280,85 +280,185 @@ p {
 /* Configuration Section */
 .config-section {
     padding: 0;
+    overflow: hidden;
 }
 
-.config-toggle {
-    width: 100%;
-    padding: 1.5rem 2rem;
-    background: none;
-    border: none;
-    cursor: pointer;
+.config-section-header {
+    padding: 1.5rem 1.75rem 1rem;
+}
+
+.config-section-header h2 {
     font-size: 1.125rem;
     font-weight: 700;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+    letter-spacing: -0.02em;
     color: var(--text-primary);
-    transition: background var(--transition-base);
-}
-
-.config-toggle:hover {
-    background: rgba(0, 0, 0, 0.01);
 }
 
 .config-panel {
-    padding: 0 2rem 2rem;
+    padding: 0 1.75rem 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
-.config-group {
-    margin-bottom: 2rem;
-}
-
-.config-group h3 {
-    font-size: 0.875rem;
+/* Group label — replaces heavy h3 headers */
+.config-group-label {
+    font-size: 0.6875rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.08em;
     color: var(--text-secondary);
-    margin-bottom: 1rem;
+    opacity: 0.7;
+    margin-bottom: 0.625rem;
 }
 
-.config-group label {
-    display: block;
-    font-size: 0.9375rem;
+/* Config row — base layout */
+.config-row {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+}
+
+/* Toggle rows sit side-by-side */
+.config-row--toggle {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.625rem;
+}
+
+.config-label {
+    font-size: 0.8125rem;
     font-weight: 500;
-    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
 }
 
-.config-group input[type="text"],
-.config-group input[type="password"],
-.config-group select {
+/* Inputs & selects inside config panel */
+.config-panel input[type="text"],
+.config-panel input[type="password"],
+.config-panel select {
     width: 100%;
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
     background: var(--bg-page);
     border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    font-size: 1rem;
+    border-radius: 10px;
+    font-size: 0.875rem;
     color: var(--text-primary);
     transition: all var(--transition-base);
     outline: none;
+    font-family: inherit;
 }
 
-.config-group input:focus,
-.config-group select:focus {
+.config-panel input:focus,
+.config-panel select:focus {
     border-color: var(--accent-intelligence);
     background: white;
-    box-shadow: 0 0 0 4px rgba(72, 209, 226, 0.1);
+    box-shadow: 0 0 0 3px rgba(72, 209, 226, 0.12);
 }
 
+.config-panel input[readonly] {
+    cursor: default;
+    color: var(--text-secondary);
+}
+
+/* Divider between groups */
+.config-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 0.875rem 0 1rem;
+}
+
+/* Toggle switch */
+.toggle {
+    position: relative;
+    display: inline-flex;
+    width: 36px;
+    height: 20px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.toggle input {
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border-apparent);
+    border-radius: 10px;
+    transition: background var(--transition-base);
+}
+
+.toggle-track::before {
+    content: '';
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    left: 3px;
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: transform var(--transition-base);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.toggle input:checked + .toggle-track {
+    background: var(--accent-intelligence);
+}
+
+.toggle input:checked + .toggle-track::before {
+    transform: translateX(16px);
+}
+
+/* Directory row */
 .directory-selector {
     display: flex;
-    gap: 0.75rem;
+    gap: 0.5rem;
+}
+
+/* Icon-only browse button */
+.btn-icon {
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+    background: var(--bg-page);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    transition: all var(--transition-base);
+}
+
+.btn-icon:hover {
+    border-color: var(--accent-intelligence);
+    color: var(--accent-intelligence);
+}
+
+/* Save row */
+.config-save {
+    margin-top: 1.25rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-subtle);
 }
 
 .btn-standard {
-    padding: 0.75rem 1.5rem;
+    padding: 0.625rem 1.25rem;
     background: white;
     border: 1px solid var(--border-subtle);
-    border-radius: 12px;
+    border-radius: 10px;
     font-weight: 600;
     cursor: pointer;
     transition: all var(--transition-base);
+    font-size: 0.875rem;
+    font-family: inherit;
 }
 
 .btn-standard:hover {
@@ -366,27 +466,23 @@ p {
 }
 
 .btn-primary {
-    padding: 0.75rem 2rem;
+    padding: 0.625rem 1.5rem;
     background: linear-gradient(135deg, var(--accent-intelligence), #38b2ac);
     color: white;
     border: none;
-    border-radius: 12px;
+    border-radius: 10px;
     font-weight: 700;
     cursor: pointer;
-    box-shadow: 0 4px 15px rgba(72, 209, 226, 0.3);
+    font-size: 0.875rem;
+    font-family: inherit;
+    box-shadow: 0 4px 12px rgba(72, 209, 226, 0.25);
     transition: all var(--transition-base);
+    width: 100%;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(72, 209, 226, 0.4);
-}
-
-.config-actions {
-    margin-top: 2rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--border-subtle);
-    text-align: right;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(72, 209, 226, 0.35);
 }
 
 /* Queue Section */

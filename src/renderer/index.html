@@ -73,39 +73,85 @@
                     </section>
                 </div>
 
-                <!-- Compact Configuration Panel -->
+                <!-- Configuration Panel -->
                 <section class="config-section card">
-                    <div class="section-header">
-                        <h2>Quick Settings</h2>
+                    <div class="config-section-header">
+                        <h2>Settings</h2>
                     </div>
                     <div class="config-panel" id="configPanel">
-                        <div class="config-group">
-                            <h3>Transcription</h3>
-                            <label>Model <select id="transcriptionModel">
-                                <option value="base.en">Base (EN)</option>
-                                <option value="small.en">Small (EN)</option>
-                                <option value="medium.en">Medium (EN)</option>
-                            </select></label>
-                        </div>
 
-                        <div class="config-group">
-                            <h3>Intelligence</h3>
-                            <label><input type="checkbox" id="diarizationEnabled"> Speaker Diarization</label>
-                            <label><input type="checkbox" id="analysisEnabled" checked> AI Analysis</label>
-                        </div>
-
-                        <div class="config-group">
-                            <h3>Gemini AI</h3>
-                            <input type="password" id="apiKey" placeholder="Gemini API Key" style="margin-bottom: 0.5rem;">
-                            <select id="analysisModel">
-                                <option value="gemini-2.5-flash-lite">Flash-Lite (Fast)</option>
-                                <option value="gemini-2.5-flash">Flash (Standard)</option>
-                                <option value="gemini-2.5-pro">Pro (Complex)</option>
+                        <p class="config-group-label">Transcription</p>
+                        <div class="config-row">
+                            <label class="config-label" for="transcriptionModel">Model</label>
+                            <select id="transcriptionModel">
+                                <option value="base.en">Base English</option>
+                                <option value="small.en">Small English</option>
+                                <option value="medium.en">Medium English</option>
                             </select>
                         </div>
 
-                        <div class="config-actions" style="border: none; padding-top: 1rem;">
-                            <button id="saveConfig" class="btn-primary" style="width: 100%;">Save Changes</button>
+                        <div class="config-divider"></div>
+
+                        <p class="config-group-label">Intelligence</p>
+                        <div class="config-row config-row--toggle">
+                            <label class="config-label" for="diarizationEnabled">Speaker Labels</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="diarizationEnabled">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="config-row" id="diarizationMethodGroup" style="display:none;">
+                            <label class="config-label" for="diarizationMethod">Method</label>
+                            <select id="diarizationMethod">
+                                <option value="whisper-native">Whisper Native</option>
+                            </select>
+                        </div>
+                        <div class="config-row config-row--toggle">
+                            <label class="config-label" for="analysisEnabled">AI Analysis</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="analysisEnabled" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <div class="config-divider"></div>
+
+                        <p class="config-group-label">Gemini AI</p>
+                        <div class="config-row">
+                            <label class="config-label" for="apiKey">API Key</label>
+                            <input type="password" id="apiKey" placeholder="Enter key...">
+                        </div>
+                        <div class="config-row">
+                            <label class="config-label" for="analysisModel">Model</label>
+                            <select id="analysisModel">
+                                <option value="gemini-2.5-flash-lite">Flash-Lite</option>
+                                <option value="gemini-2.5-flash">Flash</option>
+                                <option value="gemini-2.5-pro">Pro</option>
+                            </select>
+                        </div>
+
+                        <div class="config-divider"></div>
+
+                        <p class="config-group-label">Output</p>
+                        <div class="config-row">
+                            <label class="config-label" for="outputDirectory">Folder</label>
+                            <div class="directory-selector">
+                                <input type="text" id="outputDirectory" placeholder="~/Documents/Meeting Analysis" readonly>
+                                <button class="btn-icon" id="selectOutputDir" title="Browse">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="config-row config-row--toggle">
+                            <label class="config-label" for="useTimestampedDirs">Timestamp Folders</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="useTimestampedDirs" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <div class="config-save">
+                            <button id="saveConfig" class="btn-primary">Save</button>
                         </div>
                     </div>
                 </section>

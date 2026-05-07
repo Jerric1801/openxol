@@ -79,6 +79,8 @@ export class ConfigManager {
       if (diarizationEnabled) diarizationEnabled.checked = this.config.diarization.enabled || false
       const diarizationMethod = document.getElementById('diarizationMethod') as HTMLSelectElement | null
       if (diarizationMethod) diarizationMethod.value = this.config.diarization.method || 'whisper-native'
+      const methodGroup = document.getElementById('diarizationMethodGroup')
+      if (methodGroup) methodGroup.style.display = this.config.diarization.enabled ? 'flex' : 'none'
     }
 
     if (this.config.analysis) {
@@ -130,11 +132,10 @@ export const configManager = new ConfigManager()
 export function initConfigUI(): void {
   configManager.loadConfig()
 
-  document.getElementById('configToggle')?.addEventListener('click', () => {
-    const panel = document.getElementById('configPanel')
-    if (panel) {
-      panel.style.display = panel.style.display === 'none' ? 'block' : 'none'
-    }
+  document.getElementById('diarizationEnabled')?.addEventListener('change', (e) => {
+    const enabled = (e.target as HTMLInputElement).checked
+    const methodGroup = document.getElementById('diarizationMethodGroup')
+    if (methodGroup) methodGroup.style.display = enabled ? 'flex' : 'none'
   })
 
   document.getElementById('saveConfig')?.addEventListener('click', () => {
