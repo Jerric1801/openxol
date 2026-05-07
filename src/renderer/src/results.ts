@@ -15,6 +15,12 @@ export class ResultsManager {
         if (tabName) this.switchTab(tabName)
       })
     })
+
+    document.getElementById('closeResults')?.addEventListener('click', () => {
+      document.querySelector('.app-body')?.classList.remove('has-results')
+      const resultsSection = document.getElementById('resultsSection')
+      if (resultsSection) resultsSection.style.display = 'none'
+    })
   }
 
   switchTab(tabName: string): void {
@@ -34,15 +40,20 @@ export class ResultsManager {
     }
   }
 
-  displayResults(result: PipelineResult): void {
+  displayResults(result: PipelineResult, filename = ''): void {
     if (!result) return
 
     this.currentResult = result
     const resultsSection = document.getElementById('resultsSection')
     if (!resultsSection) return
 
-    resultsSection.style.display = 'block'
+    resultsSection.style.display = 'flex'
+    resultsSection.style.flexDirection = 'column'
+    document.querySelector('.app-body')?.classList.add('has-results')
     this.switchTab('transcript')
+
+    const filenameEl = document.getElementById('resultsFilename')
+    if (filenameEl) filenameEl.textContent = filename
 
     this.displayWorkflowStatus(result)
     if (result.errors && result.errors.length > 0) {
@@ -57,10 +68,6 @@ export class ResultsManager {
 
     this.displayAnalysis(result.analysis)
     this.updateDownloadsTab()
-
-    setTimeout(() => {
-      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }, 150)
   }
 
   private displayWorkflowStatus(result: PipelineResult): void {
@@ -79,23 +86,22 @@ export class ResultsManager {
         const hasResult = !!(result as any)[step.key]
         const error = result.errors?.find((e) => e.step === step.errorKey)
 
-        let icon = '⏳',
-          cls = 'pending',
-          txt = 'Not started'
+        let cls = 'pending',
+          txt = 'Pending'
         if (error) {
-          icon = error.critical ? '❌' : '⚠️'
           cls = error.critical ? 'error-critical' : 'error-warning'
-          txt = error.critical ? 'Failed (Critical)' : 'Failed (Non-critical)'
+          txt = error.critical ? 'Failed' : 'Warning'
         } else if (hasResult) {
-          icon = '✅'
           cls = 'success'
-          txt = 'Completed'
+          txt = 'Complete'
         }
 
         return `
         <div class="workflow-step ${cls}">
-          <span class="workflow-step-icon">${icon}</span>
-          <span class="workflow-step-name">${step.name}</span>
+          <div class="workflow-step-row">
+            <span class="workflow-step-dot"></span>
+            <span class="workflow-step-name">${step.name}</span>
+          </div>
           <span class="workflow-step-status">${txt}</span>
         </div>
       `
@@ -106,8 +112,8 @@ export class ResultsManager {
 
     const resultsSection = document.getElementById('resultsSection')
     resultsSection?.querySelector('.workflow-status')?.remove()
-    const sectionHeader = resultsSection?.querySelector('.section-header')
-    resultsSection?.insertBefore(statusContainer, sectionHeader?.nextSibling || null)
+    const resultsHeader = resultsSection?.querySelector('.results-header')
+    resultsSection?.insertBefore(statusContainer, resultsHeader?.nextSibling || null)
   }
 
   private displayErrors(errors: PipelineError[]): void {

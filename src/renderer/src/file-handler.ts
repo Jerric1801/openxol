@@ -7,6 +7,8 @@ export interface QueueItem {
   currentStep: string | null
   stepMessage: string | null
   file: File | null
+  timestamp: number
+  result: any | null
 }
 
 export class FileHandler {
@@ -17,6 +19,9 @@ export class FileHandler {
   }
 
   setupEventListeners(): void {
+    document.getElementById('queueSearch')?.addEventListener('input', () => this.updateQueueDisplay())
+    document.getElementById('queueFilter')?.addEventListener('change', () => this.updateQueueDisplay())
+
     const uploadArea = document.getElementById('uploadArea')
     const fileInput = document.getElementById('fileInput') as HTMLInputElement
 
@@ -80,67 +85,98 @@ export class FileHandler {
       progress: 0,
       currentStep: null,
       stepMessage: null,
-      file: file
+      file: file,
+      timestamp: Date.now(),
+      result: null
     }
     this.queue.push(queueItem)
+  }
+
+  private getFilteredQueue(): QueueItem[] {
+    const search = (document.getElementById('queueSearch') as HTMLInputElement | null)?.value?.toLowerCase() || ''
+    const filter = (document.getElementById('queueFilter') as HTMLSelectElement | null)?.value || 'all'
+    return this.queue.filter((item) => {
+      const matchesSearch = !search || item.name.toLowerCase().includes(search)
+      const matchesFilter = filter === 'all' || item.status === filter
+      return matchesSearch && matchesFilter
+    })
+  }
+
+  private formatTimeAgo(ts: number): string {
+    const diff = Math.floor((Date.now() - ts) / 1000)
+    if (diff < 60) return 'just now'
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+    return new Date(ts).toLocaleDateString()
   }
 
   updateQueueDisplay(): void {
     const queueContainer = document.getElementById('fileQueue')
     if (!queueContainer) return
 
+    const visible = this.getFilteredQueue()
+
     if (this.queue.length === 0) {
-      queueContainer.innerHTML = '<p class="empty-queue">No files in queue</p>'
+      queueContainer.innerHTML = `
+        <div class="sessions-empty">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.25"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+          <p>No sessions yet</p>
+          <span>Upload a file or start recording above</span>
+        </div>`
       return
     }
 
-    queueContainer.innerHTML = this.queue
+    if (visible.length === 0) {
+      queueContainer.innerHTML = `<div class="sessions-empty"><p>No matches</p></div>`
+      return
+    }
+
+    queueContainer.innerHTML = visible
+      .slice()
+      .reverse()
       .map(
         (item) => `
       <div class="queue-item" data-id="${item.id}">
-        <div class="queue-item-info">
-          <div class="queue-item-name">${this.escapeHtml(item.name)}</div>
-          <div class="queue-item-status status-${item.status}">${this.getStatusText(item.status)}</div>
-          ${
-            item.status === 'processing'
-              ? `
-            <div class="progress-container">
-              <div class="progress-header">
-                <span class="progress-step-name">${this.getStepDisplayName(item.currentStep)}</span>
-                <span class="progress-percentage">${Math.round(item.progress)}%</span>
-              </div>
-              <div class="progress-bar">
-                <div class="progress-fill" style="width: ${item.progress}%"></div>
-                <div class="progress-shine"></div>
-              </div>
-              ${
-                item.stepMessage
-                  ? `<div class="progress-message">${this.escapeHtml(item.stepMessage)}</div>`
-                  : ''
-              }
-            </div>
-          `
-              : ''
-          }
-          ${
-            item.status === 'error' || item.status === 'completed'
-              ? `
-            <div class="queue-item-actions">
-              ${
-                item.status === 'error'
-                  ? `<button class="retry-btn" data-item-id="${item.id}" title="Retry processing">🔄 Retry</button>`
-                  : ''
-              }
-              <button class="remove-btn" data-item-id="${item.id}" title="Remove from queue">×</button>
-            </div>
-          `
-              : ''
-          }
+        <div class="queue-item-row">
+          <span class="status-badge status-badge--${item.status}">${this.getStatusText(item.status)}</span>
+          <span class="queue-item-name" title="${this.escapeHtml(item.path)}">${this.escapeHtml(item.name)}</span>
+          <span class="queue-item-time">${this.formatTimeAgo(item.timestamp)}</span>
         </div>
-      </div>
-    `
+        ${
+          item.status === 'processing'
+            ? `<div class="progress-container" style="margin-top:0.5rem;">
+                <div class="progress-header">
+                  <span class="progress-step-name">${this.getStepDisplayName(item.currentStep)}</span>
+                  <span class="progress-percentage">${Math.round(item.progress)}%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width:${item.progress}%"></div>
+                </div>
+              </div>`
+            : ''
+        }
+        ${
+          item.status === 'completed' || item.status === 'error'
+            ? `<div class="queue-item-actions">
+                ${item.status === 'completed' && item.result ? `<button class="btn-view" data-item-id="${item.id}">View</button>` : ''}
+                ${item.status === 'error' ? `<button class="retry-btn" data-item-id="${item.id}">Retry</button>` : ''}
+                <button class="remove-btn" data-item-id="${item.id}">Remove</button>
+              </div>`
+            : ''
+        }
+      </div>`
       )
       .join('')
+
+    queueContainer.querySelectorAll('.btn-view').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const itemId = parseFloat((e.target as HTMLElement).dataset.itemId || '0')
+        const item = this.queue.find((q) => q.id === itemId)
+        if (item?.result) {
+          document.dispatchEvent(new CustomEvent('view-result', { detail: { result: item.result, name: item.name } }))
+        }
+      })
+    })
 
     queueContainer.querySelectorAll('.retry-btn').forEach((btn) => {
       btn.addEventListener('click', (e) => {
@@ -183,6 +219,13 @@ export class FileHandler {
       error: 'Error'
     }
     return stepNames[step || ''] || 'Processing'
+  }
+
+  updateItemResult(id: number, result: any): void {
+    const item = this.queue.find((q) => q.id === id)
+    if (item) {
+      item.result = result
+    }
   }
 
   updateItemStatus(

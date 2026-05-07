@@ -18,7 +18,6 @@ export class App {
     setInterval(() => {
       const queue = fileHandler.getQueue()
       const pendingItems = queue.filter((item) => item.status === 'pending')
-
       if (pendingItems.length > 0 && !this.isProcessing) {
         this.processNextFile()
       }
@@ -26,6 +25,11 @@ export class App {
 
     document.getElementById('cancelBtn')?.addEventListener('click', () => {
       this.cancelProcessing()
+    })
+
+    document.addEventListener('view-result', (e: Event) => {
+      const { result, name } = (e as CustomEvent).detail
+      resultsManager.displayResults(result, name)
     })
   }
 
@@ -78,11 +82,7 @@ export class App {
     this.currentProcessingItem = pendingItem
     this.partialResults = null
     fileHandler.updateItemStatus(pendingItem.id, 'processing', 0)
-    
-    const heroSection = document.getElementById('heroSection')
-    heroSection?.classList.add('hero-active')
-    
-    this.updateStatus('Neural engines warming up...', 'processing')
+    this.updateStatus('Processing...', 'processing')
     this.showCancelButton(true)
 
     try {
@@ -90,9 +90,10 @@ export class App {
       const result = await (window as any).electronAPI.processAudio(pendingItem.path, config)
 
       if (result.success) {
+        fileHandler.updateItemResult(pendingItem.id, result.result)
         fileHandler.updateItemStatus(pendingItem.id, 'completed', 100)
-        resultsManager.displayResults(result.result)
-        this.updateStatus('Insight generation successful', 'success')
+        resultsManager.displayResults(result.result, pendingItem.name)
+        this.updateStatus('Analysis complete', 'success')
       } else {
         fileHandler.updateItemStatus(pendingItem.id, 'error', 0)
         errorHandler.showError({ message: result.message || 'Unknown error' })
@@ -105,14 +106,13 @@ export class App {
     } finally {
       this.isProcessing = false
       this.currentProcessingItem = null
-      heroSection?.classList.remove('hero-active')
       this.showCancelButton(false)
     }
   }
 
   private showCancelButton(show: boolean): void {
     const btn = document.getElementById('cancelBtn')
-    if (btn) btn.style.display = show ? 'inline-block' : 'none'
+    if (btn) btn.style.display = show ? 'flex' : 'none'
   }
 
   async cancelProcessing(): Promise<void> {
@@ -127,10 +127,11 @@ export class App {
   }
 
   updateStatus(message: string, type = 'info'): void {
-    const statusBar = document.getElementById('statusBar')
-    if (statusBar) {
-      statusBar.textContent = message
-      statusBar.className = `status-bar ${type}`
+    const pill = document.getElementById('statusBar')
+    if (pill) {
+      pill.className = `status-pill ${type}`
+      const textEl = pill.querySelector('.status-text')
+      if (textEl) textEl.textContent = message
     }
   }
 }

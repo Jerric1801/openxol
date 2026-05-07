@@ -149,4 +149,8 @@ export function initConfigUI(): void {
       if (outputDirectory) outputDirectory.value = path
     }
   })
+
+  document.getElementById('toggleSettings')?.addEventListener('click', () => {
+    document.querySelector('.app-body')?.classList.toggle('settings-collapsed')
+  })
 }
