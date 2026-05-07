@@ -5,11 +5,14 @@ export class RecordingUI {
   private stream: MediaStream | null = null
   private systemStream: MediaStream | null = null
   private analyser: AnalyserNode | null = null
+  private systemAnalyser: AnalyserNode | null = null
   private audioContext: AudioContext | null = null
   private animFrameId: number | null = null
+  private systemAnimFrameId: number | null = null
   private timerInterval: ReturnType<typeof setInterval> | null = null
   private startTime = 0
   private isRecording = false
+  private isStarting = false
   private recordMode: 'mic' | 'system-mic' = 'mic'
   private blackholeDeviceId: string | null = null
   private platform: string = ''
@@ -83,8 +86,14 @@ export class RecordingUI {
   }
 
   async startRecording(): Promise<void> {
+    // Guard: prevent double-start which leaks AudioContext + RAF loops
+    if (this.isRecording || this.isStarting) return
+    this.isStarting = true
+
     try {
       const micStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false })
+      // Assign immediately so cleanup() can stop tracks even if a later step throws
+      this.stream = micStream
 
       this.audioContext = new AudioContext()
       this.analyser = this.audioContext.createAnalyser()
@@ -105,7 +114,12 @@ export class RecordingUI {
             video: false
           })
           this.systemStream = bhStream
+
+          this.systemAnalyser = this.audioContext.createAnalyser()
+          this.systemAnalyser.fftSize = 512
+
           const sysSrc = this.audioContext.createMediaStreamSource(bhStream)
+          sysSrc.connect(this.systemAnalyser)
           sysSrc.connect(dest)
         } else {
           // Windows/Linux: getDisplayMedia with loopback audio
@@ -115,9 +129,12 @@ export class RecordingUI {
           })
           displayStream.getVideoTracks().forEach((t) => t.stop())
           this.systemStream = displayStream
-          // System audio not available on macOS without a virtual audio driver
+
           if (displayStream.getAudioTracks().length > 0) {
+            this.systemAnalyser = this.audioContext.createAnalyser()
+            this.systemAnalyser.fftSize = 512
             const sysSrc = this.audioContext.createMediaStreamSource(displayStream)
+            sysSrc.connect(this.systemAnalyser)
             sysSrc.connect(dest)
           }
         }
@@ -128,8 +145,6 @@ export class RecordingUI {
         micSrc.connect(this.analyser)
         recordStream = micStream
       }
-
-      this.stream = micStream
 
       const ok = await (window as any).electronAPI.startRecording()
       if (!ok) throw new Error('Main process failed to open recording file')
@@ -158,9 +173,10 @@ export class RecordingUI {
       this.resetUI()
       if (err.name === 'NotAllowedError') {
         alert('Permission denied. Allow access and try again.')
-      } else if (err.name === 'AbortError' || err.name === 'NotReadableError') {
-        // User cancelled getDisplayMedia picker — silent fail
       }
+      // AbortError / NotReadableError = user cancelled picker — silent
+    } finally {
+      this.isStarting = false
     }
   }
 
@@ -196,16 +212,20 @@ export class RecordingUI {
 
   private cleanup(): void {
     this.isRecording = false
+    this.isStarting = false
     if (this.timerInterval !== null) clearInterval(this.timerInterval)
     if (this.animFrameId !== null) cancelAnimationFrame(this.animFrameId)
+    if (this.systemAnimFrameId !== null) cancelAnimationFrame(this.systemAnimFrameId)
     this.audioContext?.close()
     this.mediaRecorder = null
     this.stream = null
     this.systemStream = null
     this.analyser = null
+    this.systemAnalyser = null
     this.audioContext = null
     this.timerInterval = null
     this.animFrameId = null
+    this.systemAnimFrameId = null
   }
 
   private showRecordingUI(): void {
@@ -227,10 +247,21 @@ export class RecordingUI {
       }
     }
 
+    // Show sys waveform track only when system analyser is active
+    const sysTrack = document.getElementById('sysWaveformTrack')
+    if (sysTrack) {
+      sysTrack.style.display = this.systemAnalyser ? 'flex' : 'none'
+    }
+
     const canvas = document.getElementById('waveformCanvas') as HTMLCanvasElement | null
     if (canvas) {
       canvas.width = canvas.offsetWidth
       canvas.height = canvas.offsetHeight
+    }
+    const sysCanvas = document.getElementById('systemWaveformCanvas') as HTMLCanvasElement | null
+    if (sysCanvas) {
+      sysCanvas.width = sysCanvas.offsetWidth
+      sysCanvas.height = sysCanvas.offsetHeight
     }
   }
 
@@ -243,6 +274,8 @@ export class RecordingUI {
     if (rec) rec.style.display = 'none'
     hero?.classList.remove('hero-active')
     if (timer) timer.textContent = '00:00'
+    const sysTrack = document.getElementById('sysWaveformTrack')
+    if (sysTrack) sysTrack.style.display = 'none'
   }
 
   private resetUI(): void {
@@ -261,24 +294,59 @@ export class RecordingUI {
   }
 
   private startWaveform(): void {
-    const canvas = document.getElementById('waveformCanvas') as HTMLCanvasElement | null
-    if (!canvas || !this.analyser) return
+    if (this.analyser) {
+      this.animFrameId = this.startWaveformOnCanvas(
+        'waveformCanvas',
+        this.analyser,
+        '#48D1E2',
+        'rgba(72, 209, 226, 0.6)',
+        (id) => { this.animFrameId = id }
+      )
+    }
+    if (this.systemAnalyser) {
+      this.systemAnimFrameId = this.startWaveformOnCanvas(
+        'systemWaveformCanvas',
+        this.systemAnalyser,
+        '#A78BFA',
+        'rgba(167, 139, 250, 0.6)',
+        (id) => { this.systemAnimFrameId = id }
+      )
+    }
+  }
+
+  private startWaveformOnCanvas(
+    canvasId: string,
+    analyser: AnalyserNode,
+    strokeColor: string,
+    shadowColor: string,
+    setFrameId: (id: number) => void
+  ): number {
+    const canvas = document.getElementById(canvasId) as HTMLCanvasElement | null
+    if (!canvas) return -1
 
     const ctx = canvas.getContext('2d')!
-    const bufferLength = this.analyser.frequencyBinCount
+    const bufferLength = analyser.frequencyBinCount
     const dataArray = new Uint8Array(bufferLength)
+    let frameId = -1
 
     const draw = (): void => {
-      this.animFrameId = requestAnimationFrame(draw)
-      this.analyser!.getByteTimeDomainData(dataArray)
+      frameId = requestAnimationFrame(draw)
+      setFrameId(frameId)
+
+      try {
+        analyser.getByteTimeDomainData(dataArray)
+      } catch {
+        // AudioContext closed mid-frame — loop will be cancelled by cleanup
+        return
+      }
 
       const { width, height } = canvas
       ctx.clearRect(0, 0, width, height)
 
       ctx.lineWidth = 2.5
-      ctx.strokeStyle = '#48D1E2'
+      ctx.strokeStyle = strokeColor
       ctx.shadowBlur = 8
-      ctx.shadowColor = 'rgba(72, 209, 226, 0.6)'
+      ctx.shadowColor = shadowColor
       ctx.beginPath()
 
       const sliceWidth = width / bufferLength
@@ -297,6 +365,7 @@ export class RecordingUI {
     }
 
     draw()
+    return frameId
   }
 }
 

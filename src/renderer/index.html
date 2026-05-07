@@ -77,7 +77,16 @@
                             <span class="recording-dot"></span>
                             <span class="recording-label">Recording</span>
                         </div>
-                        <canvas id="waveformCanvas" class="waveform-canvas"></canvas>
+                        <div class="waveform-tracks" id="waveformTracks">
+                            <div class="waveform-track">
+                                <span class="waveform-track-label">MIC</span>
+                                <canvas id="waveformCanvas" class="waveform-canvas"></canvas>
+                            </div>
+                            <div class="waveform-track" id="sysWaveformTrack" style="display:none;">
+                                <span class="waveform-track-label">SYS</span>
+                                <canvas id="systemWaveformCanvas" class="waveform-canvas"></canvas>
+                            </div>
+                        </div>
                         <div class="recording-timer" id="recordingTimer">00:00</div>
                         <div class="recording-controls">
                             <button class="btn-stop" id="stopRecordBtn">Stop &amp; Process</button>

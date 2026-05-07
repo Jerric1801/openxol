@@ -741,9 +741,34 @@ p {
     color: var(--accent-recording);
 }
 
-.waveform-canvas {
+.waveform-tracks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
     width: 100%;
-    height: 64px;
+}
+
+.waveform-track {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.waveform-track-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--text-secondary);
+    width: 22px;
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.waveform-canvas {
+    flex: 1;
+    min-width: 0;
+    height: 48px;
     border-radius: 8px;
 }
 
