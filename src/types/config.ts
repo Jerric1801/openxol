@@ -13,6 +13,7 @@ export interface AnalysisConfig {
   enabled: boolean;
   apiKey: string;
   model: string;
+  systemPrompt?: string;
 }
 
 export interface DocumentConfig {

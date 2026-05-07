@@ -1,4 +1,8 @@
+import { marked } from 'marked'
 import type { PipelineResult, PipelineError } from '../../types/pipeline'
+
+// Render markdown safely — marked converts to HTML, we never eval user script
+marked.setOptions({ gfm: true, breaks: true })
 
 export class ResultsManager {
   private currentResult: PipelineResult | null = null
@@ -161,31 +165,44 @@ export class ResultsManager {
     }
 
     const sections = [
-      { title: 'Meeting Synthesis', content: analysis.synthesis || '' },
-      { title: 'Action Items', content: analysis.actionItems || '' },
-      { title: 'Critique & Analysis', content: analysis.critique || '' },
-      { title: 'Key Insights', content: analysis.insights || '' }
+      { key: 'executiveSummary', title: 'Executive Summary', content: analysis.executiveSummary || '' },
+      { key: 'keyDecisions',     title: 'Key Decisions',     content: analysis.keyDecisions     || '' },
+      { key: 'actionItems',      title: 'Action Items',      content: analysis.actionItems      || '' },
+      { key: 'keyThemes',        title: 'Key Themes',        content: analysis.keyThemes        || '' }
     ]
 
     analysisContent.innerHTML = sections
       .map(
         (section) => `
-      <div class="analysis-section">
-        <h3>${section.title}</h3>
-        <div>${this.formatText(section.content)}</div>
+      <div class="analysis-section" data-section="${section.key}">
+        <div class="analysis-section-header">
+          <h3>${section.title}</h3>
+          <button class="btn-copy-section" data-section="${section.key}" title="Copy to clipboard">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <span>Copy</span>
+          </button>
+        </div>
+        <div class="analysis-section-body md-body">${section.content ? marked.parse(section.content) : '<p class="no-content">No content</p>'}</div>
+        <div class="analysis-section-raw" hidden>${this.escapeHtml(section.content)}</div>
       </div>
     `
       )
       .join('')
-  }
 
-  private formatText(text: string): string {
-    if (!text) return '<p>No content</p>'
-    return text
-      .split('\n')
-      .filter((line) => line.trim())
-      .map((line) => `<p>${this.escapeHtml(line.trim())}</p>`)
-      .join('')
+    // Wire copy buttons after innerHTML is set
+    analysisContent.querySelectorAll('.btn-copy-section').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const sectionEl = (btn as HTMLElement).closest('.analysis-section')
+        const raw = sectionEl?.querySelector('.analysis-section-raw')?.textContent || ''
+        navigator.clipboard.writeText(raw).then(() => {
+          const label = btn.querySelector('span')
+          if (label) {
+            label.textContent = 'Copied!'
+            setTimeout(() => { label.textContent = 'Copy' }, 1800)
+          }
+        })
+      })
+    })
   }
 
   updateDownloadsTab(): void {
@@ -227,7 +244,7 @@ export class ResultsManager {
   private downloadAnalysis(): void {
     const a = this.currentResult?.analysis
     if (!a) return
-    const text = `Synthesis:\n${a.synthesis}\n\nAction Items:\n${a.actionItems}\n\nCritique:\n${a.critique}\n\nInsights:\n${a.insights}`
+    const text = `Executive Summary:\n${a.executiveSummary}\n\nKey Decisions:\n${a.keyDecisions}\n\nAction Items:\n${a.actionItems}\n\nKey Themes:\n${a.keyThemes}`
     this.downloadText(text, 'analysis.txt')
   }
 

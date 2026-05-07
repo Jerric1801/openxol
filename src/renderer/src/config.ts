@@ -1,5 +1,12 @@
 import type { Config } from '../../types/config'
 
+export const DEFAULT_SYSTEM_PROMPT = `You are an expert executive assistant and meeting scribe. Analyze the provided meeting transcript to produce a structured, concise summary. Focus on:
+- Executive Summary: A 3-4 sentence overview of the meeting's purpose and outcome.
+- Key Decisions: A bulleted list of all major decisions made.
+- Action Items Table: A markdown table with three columns: 'Action Item', 'Owner', and 'Deadline'. If a deadline is not explicitly mentioned, put 'TBD'.
+- Key Themes: Brief notes on main discussion points.
+Be concise, remove fluff, and ensure accountability is clear.`
+
 export class ConfigManager {
   private config: Config | null = null
 
@@ -49,7 +56,8 @@ export class ConfigManager {
           (document.getElementById('apiKey') as HTMLInputElement | null)?.value || '',
         model:
           (document.getElementById('analysisModel') as HTMLSelectElement | null)?.value ||
-          'gemini-2.5-flash-lite'
+          'gemini-2.5-flash-lite',
+        systemPrompt: this.config?.analysis?.systemPrompt || DEFAULT_SYSTEM_PROMPT
       },
       document: {
         enabled: true,
@@ -103,7 +111,7 @@ export class ConfigManager {
     return {
       transcription: { model: 'base.en', language: '', useGpu: true },
       diarization: { enabled: false, method: 'whisper-native' },
-      analysis: { enabled: true, apiKey: '', model: 'gemini-2.0-flash-exp' },
+      analysis: { enabled: true, apiKey: '', model: 'gemini-2.5-flash-lite', systemPrompt: DEFAULT_SYSTEM_PROMPT },
       document: { enabled: true, includeToc: true, includeSpeakerAnalysis: true },
       output: { directory: '', useTimestampedDirs: true }
     }
@@ -152,5 +160,41 @@ export function initConfigUI(): void {
 
   document.getElementById('toggleSettings')?.addEventListener('click', () => {
     document.querySelector('.app-body')?.classList.toggle('settings-collapsed')
+  })
+
+  // System prompt modal
+  const promptModal = document.getElementById('promptModal')
+  const promptTextarea = document.getElementById('systemPromptInput') as HTMLTextAreaElement | null
+
+  document.getElementById('editPromptBtn')?.addEventListener('click', () => {
+    if (promptModal && promptTextarea) {
+      promptTextarea.value = configManager.getConfig().analysis?.systemPrompt || DEFAULT_SYSTEM_PROMPT
+      promptModal.style.display = 'flex'
+    }
+  })
+
+  const closeModal = () => {
+    if (promptModal) promptModal.style.display = 'none'
+  }
+
+  document.getElementById('promptModalClose')?.addEventListener('click', closeModal)
+
+  promptModal?.addEventListener('click', (e) => {
+    if (e.target === promptModal) closeModal()
+  })
+
+  document.getElementById('promptModalReset')?.addEventListener('click', () => {
+    if (promptTextarea) promptTextarea.value = DEFAULT_SYSTEM_PROMPT
+  })
+
+  document.getElementById('promptModalSave')?.addEventListener('click', async () => {
+    if (promptTextarea && configManager.getConfig()) {
+      // Update in-memory config and persist
+      const updated = configManager.getConfig()
+      updated.analysis.systemPrompt = promptTextarea.value.trim() || DEFAULT_SYSTEM_PROMPT
+      await (window as any).electronAPI.saveConfig(updated)
+      ;(configManager as any).config = updated
+    }
+    closeModal()
   })
 }

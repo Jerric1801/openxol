@@ -10,10 +10,10 @@ vi.mock('@google/generative-ai', () => {
           response: {
             text: () =>
               JSON.stringify({
-                synthesis: 'Test Synthesis',
+                executiveSummary: 'Test Summary',
+                keyDecisions: 'Test Decisions',
                 actionItems: 'Test Actions',
-                critique: 'Test Critique',
-                insights: 'Test Insights'
+                keyThemes: 'Test Themes'
               })
           }
         })
@@ -27,7 +27,7 @@ describe('AnalysisModule', () => {
   const mockConfig = {
     analysis: {
       apiKey: 'test-key',
-      model: 'gemini-2.0-flash-exp'
+      model: 'gemini-2.5-flash-lite'
     }
   } as any
 
@@ -35,9 +35,9 @@ describe('AnalysisModule', () => {
     const module = new AnalysisModule(mockConfig)
     const result = await module.analyze('Hello world')
 
-    expect(result.synthesis).toBe('Test Synthesis')
+    expect(result.executiveSummary).toBe('Test Summary')
     expect(result.actionItems).toBe('Test Actions')
-    expect(result.structured.critique).toBe('Test Critique')
+    expect(result.structured.keyDecisions).toBe('Test Decisions')
   })
 
   it('should throw error if transcript is empty', async () => {
@@ -47,7 +47,6 @@ describe('AnalysisModule', () => {
 
   it('should handle JSON parsing failures gracefully', async () => {
     const module = new AnalysisModule(mockConfig)
-    // Manually override the mock for this test
     const mockModel = (module as any).model
     mockModel.generateContent.mockResolvedValueOnce({
       response: {
@@ -56,7 +55,7 @@ describe('AnalysisModule', () => {
     })
 
     const result = await module.analyze('Hello world')
-    expect(result.synthesis).toBe('Not a JSON string')
+    expect(result.executiveSummary).toBe('Not a JSON string')
     expect(result.actionItems).toBe('')
   })
 })

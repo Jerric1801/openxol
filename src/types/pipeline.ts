@@ -22,15 +22,15 @@ export interface TranscriptResult {
 export interface AnalysisResult {
   raw: string;
   structured: {
-    synthesis: string;
+    executiveSummary: string;
+    keyDecisions: string;
     actionItems: string;
-    critique: string;
-    insights: string;
+    keyThemes: string;
   };
-  synthesis: string;
+  executiveSummary: string;
+  keyDecisions: string;
   actionItems: string;
-  critique: string;
-  insights: string;
+  keyThemes: string;
 }
 
 export interface PipelineResult {

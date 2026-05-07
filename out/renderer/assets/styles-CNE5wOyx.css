@@ -1151,116 +1151,19 @@ p {
 }
 
 .analysis-section {
-    margin-bottom: 1.75rem;
-}
-
-.analysis-section-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    margin-bottom: 0.625rem;
+    margin-bottom: 2rem;
 }
 
 .analysis-section h3 {
-    font-size: 0.6875rem;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--accent-insight);
-    margin: 0;
-}
-
-/* Copy button */
-.btn-copy-section {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.2rem 0.5rem;
-    background: transparent;
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
-    font-size: 0.6875rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all var(--transition-base);
-    font-family: inherit;
-    opacity: 0;
-}
-
-.analysis-section:hover .btn-copy-section {
-    opacity: 1;
-}
-
-.btn-copy-section:hover {
-    border-color: var(--accent-intelligence);
-    color: var(--accent-intelligence);
-    background: rgba(72, 209, 226, 0.06);
-}
-
-/* Markdown rendered body */
-.md-body {
     font-size: 0.875rem;
-    line-height: 1.7;
-    color: var(--text-primary);
-}
-
-.md-body p { margin-bottom: 0.625rem; color: var(--text-primary); }
-.md-body p:last-child { margin-bottom: 0; }
-
-.md-body ul, .md-body ol {
-    padding-left: 1.25rem;
-    margin-bottom: 0.625rem;
-}
-
-.md-body li {
-    margin-bottom: 0.25rem;
-    font-size: 0.875rem;
-    color: var(--text-primary);
-}
-
-.md-body strong { font-weight: 700; color: var(--text-primary); }
-.md-body em { font-style: italic; }
-
-/* GFM tables */
-.md-body table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.8125rem;
-    margin-bottom: 0.625rem;
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.md-body th {
-    background: var(--bg-page);
     font-weight: 700;
-    font-size: 0.6875rem;
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-secondary);
-    padding: 0.5rem 0.75rem;
-    text-align: left;
-    border-bottom: 1.5px solid var(--border-subtle);
+    color: var(--accent-insight);
+    margin-bottom: 1rem;
 }
 
-.md-body td {
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--border-subtle);
-    vertical-align: top;
-    color: var(--text-primary);
-}
-
-.md-body tr:last-child td { border-bottom: none; }
-.md-body tr:nth-child(even) td { background: rgba(248, 249, 253, 0.6); }
-
-.md-body code {
-    background: var(--bg-page);
-    border: 1px solid var(--border-subtle);
-    border-radius: 4px;
-    padding: 0.1rem 0.35rem;
-    font-size: 0.8125rem;
-    font-family: 'SF Mono', 'Fira Code', monospace;
+.analysis-section p {
+    margin-bottom: 1rem;
 }
 
 .download-button {

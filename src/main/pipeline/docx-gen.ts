@@ -27,10 +27,10 @@ export class DocxGenModule {
               heading: HeadingLevel.TITLE,
               spacing: { after: 400 }
             }),
-            ...this.createSynthesisSection(analysis),
+            ...this.createExecutiveSummarySection(analysis),
+            ...this.createKeyDecisionsSection(analysis),
             ...this.createActionItemsSection(analysis),
-            ...this.createCritiqueSection(analysis),
-            ...this.createInsightsSection(analysis),
+            ...this.createKeyThemesSection(analysis),
             ...this.createTranscriptSection(transcript, diarized),
             ...this.createSpeakerAnalysisSection(diarized)
           ]
@@ -49,16 +49,31 @@ export class DocxGenModule {
     }
   }
 
-  private createSynthesisSection(analysis: AnalysisResult | null): Paragraph[] {
-    if (!analysis?.synthesis) return []
+  private createExecutiveSummarySection(analysis: AnalysisResult | null): Paragraph[] {
+    if (!analysis?.executiveSummary) return []
     return [
       new Paragraph({
-        text: 'Meeting Synthesis',
+        text: 'Executive Summary',
         heading: HeadingLevel.HEADING_1,
         spacing: { before: 400, after: 200 }
       }),
       new Paragraph({
-        text: analysis.synthesis,
+        text: analysis.executiveSummary,
+        spacing: { after: 300 }
+      })
+    ]
+  }
+
+  private createKeyDecisionsSection(analysis: AnalysisResult | null): Paragraph[] {
+    if (!analysis?.keyDecisions) return []
+    return [
+      new Paragraph({
+        text: 'Key Decisions',
+        heading: HeadingLevel.HEADING_1,
+        spacing: { before: 400, after: 200 }
+      }),
+      new Paragraph({
+        text: analysis.keyDecisions,
         spacing: { after: 300 }
       })
     ]
@@ -79,31 +94,16 @@ export class DocxGenModule {
     ]
   }
 
-  private createCritiqueSection(analysis: AnalysisResult | null): Paragraph[] {
-    if (!analysis?.critique) return []
+  private createKeyThemesSection(analysis: AnalysisResult | null): Paragraph[] {
+    if (!analysis?.keyThemes) return []
     return [
       new Paragraph({
-        text: 'Critique & Analysis',
+        text: 'Key Themes',
         heading: HeadingLevel.HEADING_1,
         spacing: { before: 400, after: 200 }
       }),
       new Paragraph({
-        text: analysis.critique,
-        spacing: { after: 300 }
-      })
-    ]
-  }
-
-  private createInsightsSection(analysis: AnalysisResult | null): Paragraph[] {
-    if (!analysis?.insights) return []
-    return [
-      new Paragraph({
-        text: 'Key Insights',
-        heading: HeadingLevel.HEADING_1,
-        spacing: { before: 400, after: 200 }
-      }),
-      new Paragraph({
-        text: analysis.insights,
+        text: analysis.keyThemes,
         spacing: { after: 300 }
       })
     ]

@@ -3,148 +3,259 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meeting Analysis</title>
-  <script type="module" crossorigin src="./assets/index-BbSYbojp.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/styles-DuhoQWji.css">
+    <title>OpenXol</title>
+  <script type="module" crossorigin src="./assets/index-DFrOaXah.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/styles-CNE5wOyx.css">
 </head>
 <body>
     <div class="app-container">
-        <aside class="sidebar">
-            <div class="logo-container">
-                <svg class="ox-logo" width="40" height="40" viewBox="0 0 100 100">
+
+        <!-- Compact header -->
+        <header class="app-header">
+            <div class="app-brand">
+                <svg class="ox-logo" width="26" height="26" viewBox="0 0 100 100">
                     <circle cx="50" cy="50" r="45" fill="none" stroke="currentColor" stroke-width="8" />
                     <path d="M30 30 L70 70 M70 30 L30 70" stroke="currentColor" stroke-width="8" stroke-linecap="round" />
                 </svg>
-                <div class="brand-text">
-                    <h1 style="font-size: 1.25rem;">OpenXol</h1>
-                </div>
+                <span class="brand-name">OpenXol</span>
+                <span class="brand-tag">Meeting Intelligence</span>
             </div>
+            <div class="header-right">
+                <div class="status-pill" id="statusBar">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Ready</span>
+                </div>
+                <button class="btn-cancel-proc" id="cancelBtn" style="display:none;">Stop</button>
+            </div>
+        </header>
 
-            <nav class="sidebar-nav">
-                <a href="#" class="nav-item active">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path></svg>
-                    Home
-                </a>
-                <a href="#" class="nav-item">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20v-6M9 20v-10M15 20v-4M18 20V4M6 20v-2"></path></svg>
-                    History
-                </a>
-                <a href="#" class="nav-item" id="sidebarSettings">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
-                    Settings
-                </a>
-            </nav>
-        </aside>
+        <!-- Main body -->
+        <div class="app-body">
 
-        <main class="workspace">
-            <header class="workspace-header">
-                <h1>Intelligence Dashboard</h1>
-                <p class="subtitle">Securely transcribe and analyze your local meetings.</p>
-            </header>
+            <!-- Left: hero + sessions -->
+            <div class="main-col">
 
-            <div class="dashboard-grid">
-                <div class="main-actions-stack" style="display: flex; flex-direction: column; gap: 2rem;">
-                    <!-- Hero Section: Active Recording / Upload -->
-                    <section class="hero-section card" id="heroSection">
+                <!-- Hero: Upload + Record -->
+                <section class="hero-section card" id="heroSection">
+                    <div class="hero-idle" id="heroIdle">
                         <div class="upload-area" id="uploadArea">
-                            <div class="upload-content">
+                            <div class="hero-action-content">
                                 <div class="icon-circle">
-                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                                        <polyline points="17 8 12 3 7 8"></polyline>
+                                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                                    </svg>
+                                </div>
+                                <h3>Upload Audio</h3>
+                                <p>Drop files or click to browse</p>
+                            </div>
+                        </div>
+                        <div class="hero-divider"></div>
+                        <div class="record-area" id="recordArea">
+                            <div class="hero-action-content">
+                                <div class="icon-circle icon-circle--record">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                         <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                                         <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                                         <line x1="12" y1="19" x2="12" y2="23"></line>
                                         <line x1="8" y1="23" x2="16" y2="23"></line>
                                     </svg>
                                 </div>
-                                <h2>Start New Task</h2>
-                                <p style="font-size: 0.875rem;">Drop audio files or click to begin</p>
+                                <h3>Record</h3>
+                                <p>Capture microphone audio</p>
                             </div>
-                            <input type="file" id="fileInput" accept="audio/*" multiple style="display: none;">
                         </div>
-                    </section>
-
-                    <!-- Processing Queue -->
-                    <section class="queue-section card">
-                        <div class="section-header">
-                            <h2>Task Queue</h2>
-                        </div>
-                        <div id="fileQueue" class="file-queue">
-                            <p class="empty-queue">No active tasks</p>
-                        </div>
-                    </section>
-                </div>
-
-                <!-- Compact Configuration Panel -->
-                <section class="config-section card">
-                    <div class="section-header">
-                        <h2>Quick Settings</h2>
+                        <input type="file" id="fileInput" accept="audio/*" multiple style="display: none;">
                     </div>
-                    <div class="config-panel" id="configPanel">
-                        <div class="config-group">
-                            <h3>Transcription</h3>
-                            <label>Model <select id="transcriptionModel">
-                                <option value="base.en">Base (EN)</option>
-                                <option value="small.en">Small (EN)</option>
-                                <option value="medium.en">Medium (EN)</option>
-                            </select></label>
-                        </div>
 
-                        <div class="config-group">
-                            <h3>Intelligence</h3>
-                            <label><input type="checkbox" id="diarizationEnabled"> Speaker Diarization</label>
-                            <label><input type="checkbox" id="analysisEnabled" checked> AI Analysis</label>
+                    <div class="hero-recording" id="heroRecording" style="display:none;">
+                        <div class="recording-pulse">
+                            <span class="recording-dot"></span>
+                            <span class="recording-label">Recording</span>
                         </div>
+                        <canvas id="waveformCanvas" class="waveform-canvas"></canvas>
+                        <div class="recording-timer" id="recordingTimer">00:00</div>
+                        <div class="recording-controls">
+                            <button class="btn-stop" id="stopRecordBtn">Stop &amp; Process</button>
+                            <button class="btn-cancel-rec" id="cancelRecordBtn">Cancel</button>
+                        </div>
+                    </div>
+                </section>
 
-                        <div class="config-group">
-                            <h3>Gemini AI</h3>
-                            <input type="password" id="apiKey" placeholder="Gemini API Key" style="margin-bottom: 0.5rem;">
-                            <select id="analysisModel">
-                                <option value="gemini-2.5-flash-lite">Flash-Lite (Fast)</option>
-                                <option value="gemini-2.5-flash">Flash (Standard)</option>
-                                <option value="gemini-2.5-pro">Pro (Complex)</option>
+                <!-- Sessions: queue + history -->
+                <section class="sessions-section">
+                    <div class="sessions-header">
+                        <h2 class="sessions-title">Sessions</h2>
+                        <div class="sessions-controls">
+                            <div class="search-wrap">
+                                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                                <input type="search" id="queueSearch" placeholder="Search...">
+                            </div>
+                            <select id="queueFilter" class="filter-select">
+                                <option value="all">All</option>
+                                <option value="pending">Queued</option>
+                                <option value="processing">Active</option>
+                                <option value="completed">Done</option>
+                                <option value="error">Failed</option>
                             </select>
                         </div>
-
-                        <div class="config-actions" style="border: none; padding-top: 1rem;">
-                            <button id="saveConfig" class="btn-primary" style="width: 100%;">Save Changes</button>
+                    </div>
+                    <div id="fileQueue" class="sessions-list">
+                        <div class="sessions-empty">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.25"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>
+                            <p>No sessions yet</p>
+                            <span>Upload a file or start recording above</span>
                         </div>
+                    </div>
+                </section>
+
+            </div>
+
+            <!-- Center: analysis results (shown when has-results) -->
+            <div class="analysis-col">
+                <section class="results-section card" id="resultsSection" style="display:none;">
+                    <div class="results-header">
+                        <div>
+                            <h2>Analysis</h2>
+                            <span class="results-filename" id="resultsFilename"></span>
+                        </div>
+                        <button class="btn-close-results" id="closeResults" title="Back to sessions">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                        </button>
+                    </div>
+                    <div class="results-tabs">
+                        <button class="tab-button active" data-tab="transcript">Transcript</button>
+                        <button class="tab-button" data-tab="analysis">AI</button>
+                        <button class="tab-button" data-tab="downloads">Export</button>
+                    </div>
+                    <div class="tab-content" id="transcriptTab">
+                        <pre id="transcriptContent"></pre>
+                    </div>
+                    <div class="tab-content" id="analysisTab" style="display: none;">
+                        <div id="analysisContent"></div>
+                    </div>
+                    <div class="tab-content" id="downloadsTab" style="display: none;">
+                        <div id="downloadsContent"></div>
                     </div>
                 </section>
             </div>
 
-            <!-- Results Section (Full Width Below Grid) -->
-            <section class="results-section card" id="resultsSection" style="display: none;">
-                <div class="section-header">
-                    <h2>Latest Insights</h2>
-                </div>
-                <div class="results-tabs">
-                    <button class="tab-button active" data-tab="transcript">Transcript</button>
-                    <button class="tab-button" data-tab="analysis">AI Analysis</button>
-                    <button class="tab-button" data-tab="downloads">Exports</button>
-                </div>
-                <div class="tab-content" id="transcriptTab">
-                    <pre id="transcriptContent"></pre>
-                </div>
-                <div class="tab-content" id="analysisTab" style="display: none;">
-                    <div id="analysisContent"></div>
-                </div>
-                <div class="tab-content" id="downloadsTab" style="display: none;">
-                    <div id="downloadsContent"></div>
-                </div>
-            </section>
-        </main>
+            <!-- Right: config -->
+            <div class="side-col">
 
-        <footer class="app-footer">
-            <div class="status-container glass-panel">
-                <div class="status-bar" id="statusBar">Ready</div>
-                <button class="cancel-btn" id="cancelBtn" style="display: none;">Stop Task</button>
+                <!-- Config -->
+                <section class="config-section card">
+                    <div class="config-section-header">
+                        <h2>Settings</h2>
+                        <button class="btn-settings-toggle" id="toggleSettings" title="Collapse settings">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+                        </button>
+                    </div>
+                    <div class="config-panel" id="configPanel">
+
+                        <p class="config-group-label">Transcription</p>
+                        <div class="config-row">
+                            <label class="config-label" for="transcriptionModel">Model</label>
+                            <select id="transcriptionModel">
+                                <option value="base.en">Base English</option>
+                                <option value="small.en">Small English</option>
+                                <option value="medium.en">Medium English</option>
+                            </select>
+                        </div>
+
+                        <div class="config-divider"></div>
+
+                        <p class="config-group-label">Intelligence</p>
+                        <div class="config-row config-row--toggle">
+                            <label class="config-label" for="diarizationEnabled">Speaker Labels</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="diarizationEnabled">
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="config-row" id="diarizationMethodGroup" style="display:none;">
+                            <label class="config-label" for="diarizationMethod">Method</label>
+                            <select id="diarizationMethod">
+                                <option value="whisper-native">Whisper Native</option>
+                            </select>
+                        </div>
+                        <div class="config-row config-row--toggle">
+                            <label class="config-label" for="analysisEnabled">AI Analysis</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="analysisEnabled" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+                        <div class="config-row config-row--toggle">
+                            <label class="config-label">System Prompt</label>
+                            <button class="btn-edit-prompt" id="editPromptBtn">Edit</button>
+                        </div>
+
+                        <div class="config-divider"></div>
+
+                        <p class="config-group-label">Gemini AI</p>
+                        <div class="config-row">
+                            <label class="config-label" for="apiKey">API Key</label>
+                            <input type="password" id="apiKey" placeholder="Enter key...">
+                        </div>
+                        <div class="config-row">
+                            <label class="config-label" for="analysisModel">Model</label>
+                            <select id="analysisModel">
+                                <option value="gemini-2.5-flash-lite">Flash-Lite</option>
+                                <option value="gemini-2.5-flash">Flash</option>
+                                <option value="gemini-2.5-pro">Pro</option>
+                            </select>
+                        </div>
+
+                        <div class="config-divider"></div>
+
+                        <p class="config-group-label">Output</p>
+                        <div class="config-row">
+                            <label class="config-label" for="outputDirectory">Folder</label>
+                            <div class="directory-selector">
+                                <input type="text" id="outputDirectory" placeholder="~/Documents/Meeting Analysis" readonly>
+                                <button class="btn-icon" id="selectOutputDir" title="Browse">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="config-row config-row--toggle">
+                            <label class="config-label" for="useTimestampedDirs">Timestamp Folders</label>
+                            <label class="toggle">
+                                <input type="checkbox" id="useTimestampedDirs" checked>
+                                <span class="toggle-track"></span>
+                            </label>
+                        </div>
+
+                        <div class="config-save">
+                            <button id="saveConfig" class="btn-primary">Save</button>
+                        </div>
+                    </div>
+                </section>
+
+
             </div>
-        </footer>
+        </div>
+    </div>
+
+    <!-- System prompt modal -->
+    <div class="modal-overlay" id="promptModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>System Prompt</h3>
+                <button class="btn-modal-close" id="promptModalClose">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <p class="modal-desc">Customize how the AI analyzes your meetings. Changes apply to the next processed file.</p>
+            <textarea id="systemPromptInput" class="modal-textarea" placeholder="Enter your system prompt..."></textarea>
+            <div class="modal-actions">
+                <button id="promptModalReset" class="btn-standard">Reset to Default</button>
+                <button id="promptModalSave" class="btn-primary btn-primary--sm">Save</button>
+            </div>
+        </div>
     </div>
 
 </body>
 </html>
-
-
-
-

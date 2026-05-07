@@ -186,6 +186,10 @@
                                 <span class="toggle-track"></span>
                             </label>
                         </div>
+                        <div class="config-row config-row--toggle">
+                            <label class="config-label">System Prompt</label>
+                            <button class="btn-edit-prompt" id="editPromptBtn">Edit</button>
+                        </div>
 
                         <div class="config-divider"></div>
 
@@ -230,6 +234,24 @@
                 </section>
 
 
+            </div>
+        </div>
+    </div>
+
+    <!-- System prompt modal -->
+    <div class="modal-overlay" id="promptModal" style="display:none;">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>System Prompt</h3>
+                <button class="btn-modal-close" id="promptModalClose">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <p class="modal-desc">Customize how the AI analyzes your meetings. Changes apply to the next processed file.</p>
+            <textarea id="systemPromptInput" class="modal-textarea" placeholder="Enter your system prompt..."></textarea>
+            <div class="modal-actions">
+                <button id="promptModalReset" class="btn-standard">Reset to Default</button>
+                <button id="promptModalSave" class="btn-primary btn-primary--sm">Save</button>
             </div>
         </div>
     </div>

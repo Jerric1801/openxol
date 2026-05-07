@@ -3,6 +3,13 @@ import log from 'electron-log'
 import type { Config } from '../../types/config'
 import type { AnalysisResult } from '../../types/pipeline'
 
+export const DEFAULT_SYSTEM_PROMPT = `You are an expert executive assistant and meeting scribe. Analyze the provided meeting transcript to produce a structured, concise summary. Focus on:
+- Executive Summary: A 3-4 sentence overview of the meeting's purpose and outcome.
+- Key Decisions: A bulleted list of all major decisions made.
+- Action Items Table: A markdown table with three columns: 'Action Item', 'Owner', and 'Deadline'. If a deadline is not explicitly mentioned, put 'TBD'.
+- Key Themes: Brief notes on main discussion points.
+Be concise, remove fluff, and ensure accountability is clear.`
+
 export class AnalysisModule {
   private config: Config
   private apiKey: string | undefined
@@ -12,14 +19,14 @@ export class AnalysisModule {
   constructor(config: Config) {
     this.config = config
     this.apiKey = config.analysis?.apiKey || process.env.GEMINI_API_KEY
-    
+
     if (!this.apiKey) {
       log.warn('Gemini API key not configured')
     } else {
       this.genAI = new GoogleGenerativeAI(this.apiKey)
-      const modelName = config.analysis?.model || 'gemini-2.0-flash-exp'
-      
-      this.model = this.genAI.getGenerativeModel({ 
+      const modelName = config.analysis?.model || 'gemini-2.5-flash-lite'
+
+      this.model = this.genAI.getGenerativeModel({
         model: modelName,
         generationConfig: {
           responseMimeType: 'application/json'
@@ -61,34 +68,41 @@ export class AnalysisModule {
   }
 
   private buildAnalysisPrompt(transcriptText: string): string {
-    return `Analyze this meeting transcript and provide a comprehensive analysis. Return your response as a JSON object with the following structure:
+    const systemContext = this.config.analysis?.systemPrompt || DEFAULT_SYSTEM_PROMPT
+
+    return `${systemContext}
+
+CRITICAL OUTPUT RULES — you MUST follow these exactly:
+1. Return ONLY a valid JSON object. No markdown code fences, no extra text outside the JSON.
+2. All field values must be formatted in GitHub-Flavored Markdown (GFM).
+3. Use this exact JSON structure with these exact keys:
 
 {
-  "synthesis": "Summary of main topics discussed, key decisions made, and important points raised",
-  "actionItems": "Specific tasks identified with assignees (if mentioned) and timelines or deadlines (if mentioned)",
-  "critique": "Quality assessment of the meeting, areas for improvement, and effectiveness of communication",
-  "insights": "Important learnings, innovative ideas discussed, and strategic considerations"
+  "executiveSummary": "3–4 sentence prose overview of the meeting purpose and outcome.",
+  "keyDecisions": "Bulleted list using GFM syntax (- item). One decision per bullet.",
+  "actionItems": "GFM markdown table with header row and separator row:\\n| Action Item | Owner | Deadline |\\n|---|---|---|\\n| ... | ... | TBD |",
+  "keyThemes": "Bulleted list using GFM syntax (- item). One theme per bullet with a brief explanation."
 }
 
-Transcript:
+TRANSCRIPT:
 ${transcriptText}
 
-Provide a detailed analysis in the exact JSON format specified above.`
+Respond with the JSON object only.`
   }
 
   private parseAnalysisFromJSON(jsonData: any, rawText: string): AnalysisResult {
     return {
       raw: rawText,
       structured: {
-        synthesis: jsonData.synthesis || '',
+        executiveSummary: jsonData.executiveSummary || '',
+        keyDecisions: jsonData.keyDecisions || '',
         actionItems: jsonData.actionItems || '',
-        critique: jsonData.critique || '',
-        insights: jsonData.insights || ''
+        keyThemes: jsonData.keyThemes || ''
       },
-      synthesis: jsonData.synthesis || '',
+      executiveSummary: jsonData.executiveSummary || '',
+      keyDecisions: jsonData.keyDecisions || '',
       actionItems: jsonData.actionItems || '',
-      critique: jsonData.critique || '',
-      insights: jsonData.insights || ''
+      keyThemes: jsonData.keyThemes || ''
     }
   }
 
@@ -96,15 +110,15 @@ Provide a detailed analysis in the exact JSON format specified above.`
     return {
       raw: text,
       structured: {
-        synthesis: text,
+        executiveSummary: text,
+        keyDecisions: '',
         actionItems: '',
-        critique: '',
-        insights: ''
+        keyThemes: ''
       },
-      synthesis: text,
+      executiveSummary: text,
+      keyDecisions: '',
       actionItems: '',
-      critique: '',
-      insights: ''
+      keyThemes: ''
     }
   }
 }
