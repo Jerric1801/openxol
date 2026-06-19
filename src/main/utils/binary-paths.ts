@@ -35,6 +35,16 @@ function getBinaryDir(): string {
 
 export function getBinaryPath(name: string): string {
   const filename = process.platform === 'win32' ? `${name}.exe` : name
+  
+  // Check writable userData directory first (for auto-downloaded binaries)
+  const userData = process.env['APP_USER_DATA'] || ''
+  if (userData) {
+    const userBinaryPath = path.join(userData, 'bin', PLATFORM_DIR, filename)
+    if (fs.existsSync(userBinaryPath)) {
+      return userBinaryPath
+    }
+  }
+
   return path.join(getBinaryDir(), filename)
 }
 
